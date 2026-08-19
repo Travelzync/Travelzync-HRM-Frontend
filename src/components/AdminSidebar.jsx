@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
 import { ADMIN_NAV } from '../constants/nav'
 
 export default function AdminSidebar({ isOpen, onClose }) {
@@ -13,7 +14,7 @@ export default function AdminSidebar({ isOpen, onClose }) {
           width: 220, minWidth: 220, height: '100vh',
           background: 'linear-gradient(180deg, #c0392b 0%, #922b21 60%, #7b241c 100%)',
           display: 'flex', flexDirection: 'column',
-          position: 'relative', zIndex: 30, flexShrink: 0,
+          zIndex: 30, flexShrink: 0,
         }}
         className={`fixed lg:static top-0 left-0 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
@@ -59,7 +60,13 @@ export default function AdminSidebar({ isOpen, onClose }) {
         </nav>
 
         {/* Bottom */}
-        <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+        <div style={{
+          padding: '14px 16px',
+          borderTop: '1px solid rgba(255,255,255,0.12)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 34, height: 34, borderRadius: '50%',
@@ -73,6 +80,30 @@ export default function AdminSidebar({ isOpen, onClose }) {
               <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10, marginTop: 3 }}>Admin Portal</p>
             </div>
           </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem('isAuthenticated')
+              localStorage.removeItem('userRole')
+              window.location.href = '/login'
+            }}
+            title="Log Out"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(255,255,255,0.65)', padding: 6, display: 'flex',
+              alignItems: 'center', justifyContent: 'center', borderRadius: 6,
+              transition: 'background-color 0.15s, color 0.15s'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = '#fff'
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = 'rgba(255,255,255,0.65)'
+              e.currentTarget.style.backgroundColor = 'transparent'
+            }}
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </aside>
     </>
