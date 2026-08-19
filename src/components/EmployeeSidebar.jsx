@@ -13,7 +13,7 @@ export default function EmployeeSidebar({ isOpen, onClose }) {
         width: 220, minWidth: 220, height: '100vh',
         background: 'linear-gradient(180deg, #c0392b 0%, #922b21 60%, #7b241c 100%)',
         display: 'flex', flexDirection: 'column',
-        position: 'relative', zIndex: 30, flexShrink: 0,
+        zIndex: 30, flexShrink: 0,
       }}
         className={`fixed lg:static top-0 left-0 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
