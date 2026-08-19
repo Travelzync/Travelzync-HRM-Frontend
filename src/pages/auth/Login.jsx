@@ -28,7 +28,17 @@ export default function Login() {
       return
     }
     setError('')
-    navigate('/employee/overview')
+
+    // Simulate login and set roles in localStorage
+    const role = email.toLowerCase().includes('admin') ? 'admin' : 'employee'
+    localStorage.setItem('isAuthenticated', 'true')
+    localStorage.setItem('userRole', role)
+
+    if (role === 'admin') {
+      navigate('/admin/dashboard')
+    } else {
+      navigate('/employee/overview')
+    }
   }
 
   return (
