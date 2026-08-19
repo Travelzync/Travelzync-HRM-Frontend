@@ -10,12 +10,9 @@ export default function AdminSidebar({ isOpen, onClose }) {
 
       <aside
         style={{
-          width: 220, minWidth: 220, height: '100vh',
-          background: 'linear-gradient(180deg, #c0392b 0%, #922b21 60%, #7b241c 100%)',
-          display: 'flex', flexDirection: 'column',
-          position: 'relative', zIndex: 30, flexShrink: 0,
+          background: 'linear-gradient(180deg, #c0392b 0%, #922b21 60%, #7b241c 100%)'
         }}
-        className={`fixed lg:static top-0 left-0 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`fixed lg:static top-0 left-0 z-30 w-[220px] h-screen flex flex-col shrink-0 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         {/* Logo */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>

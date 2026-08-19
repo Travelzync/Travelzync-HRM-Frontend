@@ -39,7 +39,6 @@ export default function Login() {
         style={{
           width: '50%',
           background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 50%, #7f1d1d 100%)',
-          display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: '48px',

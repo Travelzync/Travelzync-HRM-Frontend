@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { CheckSquare, Workflow, FileText, BarChart2, CalendarDays, ClipboardList, Plus, CheckCircle2, Circle } from 'lucide-react'
+import { CheckSquare, Workflow, FileText, BarChart2, CalendarDays, ClipboardList, Plus, Circle } from 'lucide-react'
 
 const statCards = [
   { label: 'Total Working Days', value: '22', sub: 'This Month', color: '#ef4444', bg: '#fef2f2', icon: '📅' },
@@ -41,14 +41,12 @@ const workHistory = [
   { day: 'Sat', work: 60, ot: 15 },
 ]
 
-function Card({ children, style = {} }) {
+function Card({ children, className = '', style = {} }) {
   return (
-    <div style={{
-      background: '#fff', borderRadius: 14,
-      border: '1px solid #f1f5f9',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      ...style,
-    }}>
+    <div 
+      className={`bg-white rounded-2xl border border-[#f1f5f9] shadow-sm ${className}`}
+      style={style}
+    >
       {children}
     </div>
   )
@@ -124,7 +122,7 @@ function DonutChart() {
   const off3 = circ - p1 - p2
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+    <div className="flex flex-col sm:flex-row items-center gap-6">
       <div style={{ position: 'relative', flexShrink: 0 }}>
         <svg width={130} height={130} style={{ transform: 'rotate(-90deg)' }}>
           <circle cx={65} cy={65} r={r} fill="none" stroke="#f1f5f9" strokeWidth={14} />
@@ -163,18 +161,13 @@ function DonutChart() {
 
 export default function Overview() {
   return (
-    <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+    <div className="flex flex-col xl:flex-row gap-5 items-start w-full">
 
       {/* ── Main Column ── */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="flex-1 min-w-0 flex flex-col gap-4 w-full">
 
         {/* Hero Banner */}
-        <div style={{
-          background: 'linear-gradient(135deg, #c0392b 0%, #922b21 100%)',
-          borderRadius: 16, padding: '24px 28px',
-          display: 'flex', alignItems: 'center', gap: 20,
-          position: 'relative', overflow: 'hidden',
-        }}>
+        <div className="bg-gradient-to-br from-[#c0392b] to-[#922b21] rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row items-center gap-5 relative overflow-hidden w-full">
           <div style={{
             position: 'absolute', right: -30, top: -30,
             width: 180, height: 180, borderRadius: '50%',
@@ -195,12 +188,12 @@ export default function Overview() {
               background: '#22c55e', border: '2px solid #fff',
             }} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div className="flex-1 text-center sm:text-left z-10">
             <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 4 }}>Good Evening 🔥</p>
             <h2 style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: 1, marginBottom: 6 }}>JOHN DOE</h2>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>MERN STACK DEVELOPER · ID: TZ-2458</p>
           </div>
-          <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+          <div className="flex flex-wrap gap-2.5 w-full sm:w-auto justify-center sm:justify-end z-10">
             <button style={{
               padding: '8px 16px', borderRadius: 8,
               background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
@@ -221,9 +214,9 @@ export default function Overview() {
         </div>
 
         {/* Stat Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full">
           {statCards.map(({ label, value, sub, color, bg, icon }) => (
-            <Card key={label} style={{ padding: '16px 18px' }}>
+            <Card key={label} className="p-4 sm:p-5">
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                   {icon}
@@ -239,8 +232,8 @@ export default function Overview() {
         </div>
 
         {/* Clock + Work History */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 16 }}>
-          <Card style={{ padding: '18px 20px' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-4 w-full">
+          <Card className="p-5">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Clock In / Out</p>
@@ -261,7 +254,7 @@ export default function Overview() {
             </div>
           </Card>
 
-          <Card style={{ padding: '18px 20px' }}>
+          <Card className="p-5">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Work History</p>
@@ -277,9 +270,9 @@ export default function Overview() {
         </div>
 
         {/* Tasks + Attendance Summary + Quick Actions */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {/* My Tasks */}
-          <Card style={{ padding: '18px 20px' }}>
+          <Card className="p-5">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>My Tasks</p>
               <span style={{ fontSize: 12, color: '#ef4444', cursor: 'pointer' }}>View All</span>
@@ -306,7 +299,7 @@ export default function Overview() {
           </Card>
 
           {/* Attendance Summary */}
-          <Card style={{ padding: '18px 20px' }}>
+          <Card className="p-5">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Attendance Summary</p>
               <span style={{ fontSize: 12, color: '#94a3b8', background: '#f8fafc', padding: '3px 8px', borderRadius: 6, cursor: 'pointer' }}>This Month ▾</span>
@@ -315,9 +308,9 @@ export default function Overview() {
           </Card>
 
           {/* Quick Actions */}
-          <Card style={{ padding: '18px 20px' }}>
+          <Card className="p-5">
             <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 14 }}>Quick Actions</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+            <div className="grid grid-cols-3 gap-2">
               {quickActions.map(({ label, icon: Icon, color, bg }) => (
                 <button key={label} style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
@@ -336,10 +329,10 @@ export default function Overview() {
       </div>
 
       {/* ── Right Column ── */}
-      <div style={{ width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="w-full xl:w-[260px] shrink-0 flex flex-col gap-4">
 
         {/* Upcoming Holiday */}
-        <Card style={{ padding: '18px 20px' }}>
+        <Card className="p-5">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <span style={{ fontSize: 16 }}>🎉</span>
             <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Upcoming Holiday</p>
@@ -367,7 +360,7 @@ export default function Overview() {
         </Card>
 
         {/* Recent Notifications */}
-        <Card style={{ padding: '18px 20px' }}>
+        <Card className="p-5">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Recent Notifications</p>
             <span style={{ fontSize: 12, color: '#ef4444', cursor: 'pointer' }}>View All</span>
