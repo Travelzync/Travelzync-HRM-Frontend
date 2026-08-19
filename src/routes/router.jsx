@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import Login from '../pages/auth/Login'
 import EmployeeLayout from '../layouts/EmployeeLayout'
 import AdminLayout from '../layouts/AdminLayout'
-
+import ProtectedRoute from '../components/ProtectedRoute'
 // Employee pages
 import Overview from '../pages/employee/Overview'
 import EAttendance from '../pages/employee/Attendance'
@@ -41,7 +41,11 @@ const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
   {
     path: '/employee',
-    element: <EmployeeLayout />,
+    element: (
+      <ProtectedRoute allowedRole="employee">
+        <EmployeeLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="overview" replace /> },
       { path: 'overview', element: <Overview /> },
@@ -65,7 +69,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: (
+      <ProtectedRoute allowedRole="admin">
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <Navigate to="dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
@@ -79,6 +87,7 @@ const router = createBrowserRouter([
       { path: 'notifications', element: <ANotifications /> },
       { path: 'reports', element: <AReports /> },
       { path: 'settings', element: <ASettings /> },
+      
     ],
   },
 ])
