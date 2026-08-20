@@ -18,10 +18,6 @@ body {
 /* ── Mobile & Tablet Responsive Overrides (max-width: 1024px) ── */
 @media (max-width: 1024px) {
   /* Main layouts */
-  .responsive-layout-wrapper {
-    display: block !important;
-  }
-
   .responsive-layout-container {
     display: flex !important;
     flex-direction: column !important;
