@@ -48,14 +48,14 @@ const statusStyle = {
   Rejected: { color: '#ef4444', bg: '#fef2f2' },
 }
 
-function Card({ children, className = '', style = {} }) {
+function Card({ children, style = {} }) {
   return (
-    <div 
-      className={`bg-white rounded-2xl border border-[#f1f5f9] shadow-sm ${className}`}
-      style={style}
-    >
-      {children}
-    </div>
+    <div style={{
+      background: '#fff', borderRadius: 14,
+      border: '1px solid #f1f5f9',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      ...style,
+    }}>{children}</div>
   )
 }
 
@@ -85,20 +85,25 @@ function BarChart() {
 
 export default function Dashboard() {
   return (
-    <div className="flex flex-col xl:flex-row gap-5 items-start w-full">
+    <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }} className="responsive-layout-container">
 
       {/* ── Main Column ── */}
-      <div className="flex-1 min-w-0 flex flex-col gap-4 w-full">
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Hero Banner */}
-        <div className="bg-gradient-to-br from-[#c0392b] to-[#922b21] rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row justify-between items-center gap-5 relative overflow-hidden w-full">
+        <div style={{
+          background: 'linear-gradient(135deg, #c0392b 0%, #922b21 100%)',
+          borderRadius: 16, padding: '24px 28px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'relative', overflow: 'hidden',
+        }} className="responsive-hero-banner">
           <div style={{ position: 'absolute', right: -30, top: -30, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-          <div className="text-center sm:text-left z-10">
+          <div>
             <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 6 }}>Admin Dashboard 🛡️</p>
             <h2 style={{ color: '#fff', fontSize: 24, fontWeight: 800, marginBottom: 6 }}>TravelZync HRM Overview</h2>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>Friday, 25 August 2026 · All systems operational</p>
           </div>
-          <div className="flex gap-6 sm:gap-8 justify-center z-10 shrink-0">
+          <div style={{ display: 'flex', gap: 24, flexShrink: 0 }} className="responsive-hero-actions">
             {[{ v: '248', l: 'Employees' }, { v: '86%', l: 'Attendance' }, { v: '12', l: 'Pending' }].map(({ v, l }) => (
               <div key={l} style={{ textAlign: 'center' }}>
                 <p style={{ color: '#fff', fontSize: 22, fontWeight: 700, lineHeight: 1 }}>{v}</p>
@@ -109,9 +114,9 @@ export default function Dashboard() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }} className="responsive-stats-grid-3">
           {statCards.map(({ label, value, change, up, icon, color, bg }) => (
-            <Card key={label} className="p-4 sm:p-5">
+            <Card key={label} style={{ padding: '16px 18px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 10, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
@@ -131,8 +136,8 @@ export default function Dashboard() {
         </div>
 
         {/* Attendance Chart + Dept Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4 w-full">
-          <Card className="p-5">
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }} className="responsive-double-grid">
+          <Card style={{ padding: '18px 20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Attendance Overview</p>
@@ -146,7 +151,7 @@ export default function Dashboard() {
             <BarChart />
           </Card>
 
-          <Card className="p-5">
+          <Card style={{ padding: '18px 20px' }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 16 }}>Department Strength</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {deptData.map(({ name, count, pct }) => (
@@ -165,13 +170,13 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Employees Table */}
-        <Card className="p-5">
+        <Card style={{ padding: '18px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Recent Employees</p>
             <span style={{ fontSize: 12, color: '#ef4444', cursor: 'pointer' }}>View All</span>
           </div>
-          <div className="overflow-x-auto w-full">
-            <table style={{ width: '100%', minWidth: '500px', borderCollapse: 'collapse' }}>
+          <div className="responsive-table-wrapper">
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                   {['Employee', 'Role', 'Department', 'Joined', 'Status'].map(h => (
@@ -206,34 +211,30 @@ export default function Dashboard() {
         </Card>
 
         {/* Leave Requests */}
-        <Card className="p-5">
+        <Card style={{ padding: '18px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Leave Requests</p>
             <span style={{ fontSize: 12, color: '#ef4444', cursor: 'pointer' }}>View All</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {leaveRequests.map(({ name, type, days, date, status }) => (
-              <div key={name + type} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-[#f8fafc] rounded-xl justify-between">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #c0392b)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>{name.split(' ').map(n => n[0]).join('')}</span>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{name} <span style={{ fontWeight: 400, color: '#6b7280' }}>· {type}</span></p>
-                    <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{days} · {date}</p>
-                  </div>
+              <div key={name + type} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#f8fafc', borderRadius: 10 }} className="responsive-leave-item">
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #c0392b)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>{name.split(' ').map(n => n[0]).join('')}</span>
                 </div>
-                <div className="flex items-center gap-3 self-end sm:self-center">
-                  <span style={{ fontSize: 11, fontWeight: 600, color: statusStyle[status].color, background: statusStyle[status].bg, padding: '3px 8px', borderRadius: 6 }}>
-                    {status}
-                  </span>
-                  {status === 'Pending' && (
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <button style={{ padding: '4px 10px', background: '#f0fdf4', color: '#22c55e', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Approve</button>
-                      <button style={{ padding: '4px 10px', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Reject</button>
-                    </div>
-                  )}
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{name} <span style={{ fontWeight: 400, color: '#6b7280' }}>· {type}</span></p>
+                  <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{days} · {date}</p>
                 </div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: statusStyle[status].color, background: statusStyle[status].bg, padding: '3px 8px', borderRadius: 6 }}>
+                  {status}
+                </span>
+                {status === 'Pending' && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button style={{ padding: '4px 10px', background: '#f0fdf4', color: '#22c55e', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Approve</button>
+                    <button style={{ padding: '4px 10px', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Reject</button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -241,10 +242,10 @@ export default function Dashboard() {
       </div>
 
       {/* ── Right Column ── */}
-      <div className="w-full xl:w-[260px] shrink-0 flex flex-col gap-4">
+      <div style={{ width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }} className="responsive-right-column">
 
         {/* Quick Stats */}
-        <Card className="p-5">
+        <Card style={{ padding: '18px 20px' }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 14 }}>Today's Summary</p>
           {[
             { label: 'Check-ins', value: '214', color: '#22c55e' },
@@ -264,7 +265,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Recent Activity */}
-        <Card className="p-5">
+        <Card style={{ padding: '18px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Recent Activity</p>
             <span style={{ fontSize: 12, color: '#ef4444', cursor: 'pointer' }}>View All</span>
@@ -285,7 +286,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Upcoming Holidays */}
-        <Card className="p-5">
+        <Card style={{ padding: '18px 20px' }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 14 }}>Upcoming Holidays</p>
           {[
             { name: 'ONAM', date: '25 Aug 2026', days: '17 days' },
