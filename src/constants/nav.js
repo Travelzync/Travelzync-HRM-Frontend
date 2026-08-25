@@ -13,7 +13,7 @@ export const EMPLOYEE_NAV = [
   { label: 'Work From Home', path: '/employee/work-from-home', icon: Home },
   { label: 'Assets', path: '/employee/assets', icon: Package },
   { label: 'Holidays', path: '/employee/holidays', icon: Umbrella },
-  { label: 'Notifications', path: '/employee/notifications', icon: Bell, badge: 3 },
+  { label: 'Notifications', path: '/employee/notifications', icon: Bell },
   { label: 'Tasks', path: '/employee/tasks', icon: CheckSquare },
   { label: 'Meeting Hub', path: '/employee/meeting-hub', icon: Video },
   { label: 'My Payslips', path: '/employee/payslips', icon: FileText },

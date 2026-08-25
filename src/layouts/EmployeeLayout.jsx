@@ -3,12 +3,16 @@ import { Outlet, useLocation } from 'react-router-dom'
 import EmployeeSidebar from '../components/EmployeeSidebar'
 import EmployeeHeader from '../components/EmployeeHeader'
 import ProjectsSidebar from '../components/ProjectsSidebar'
+import ChatSidebar from '../components/ChatSidebar'
 
 export default function EmployeeLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState('crm-app')
+  const [selectedChatId, setSelectedChatId] = useState('channel-test2')
   const location = useLocation()
   const isTaskFlow = location.pathname === '/employee/taskflow'
+  const isChat = location.pathname === '/employee/chat'
+  const isCustomLayout = isTaskFlow || isChat
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f8fafc' }} className="responsive-layout-wrapper">
@@ -19,21 +23,28 @@ export default function EmployeeLayout() {
           selectedProjectId={selectedProjectId}
           setSelectedProjectId={setSelectedProjectId}
         />
+      ) : isChat ? (
+        <ChatSidebar 
+          isOpen={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)} 
+          selectedChatId={selectedChatId}
+          setSelectedChatId={setSelectedChatId}
+        />
       ) : (
         <EmployeeSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       )}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-        {!isTaskFlow && <EmployeeHeader onMenuClick={() => setSidebarOpen(true)} />}
+        {!isCustomLayout && <EmployeeHeader onMenuClick={() => setSidebarOpen(true)} />}
         <main style={{ 
           flex: 1, 
           overflowY: 'auto', 
-          padding: isTaskFlow ? 0 : 24, 
+          padding: isCustomLayout ? 0 : 24, 
           display: 'flex', 
           flexDirection: 'column' 
-        }} className={isTaskFlow ? "" : "responsive-layout-main"}>
-          <Outlet context={{ selectedProjectId, setSelectedProjectId, setSidebarOpen }} />
+        }} className={isCustomLayout ? "" : "responsive-layout-main"}>
+          <Outlet context={{ selectedProjectId, setSelectedProjectId, selectedChatId, setSelectedChatId, setSidebarOpen }} />
         </main>
-        {!isTaskFlow && (
+        {!isCustomLayout && (
           <footer style={{
             padding: '12px 24px', borderTop: '1px solid #f1f5f9',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',

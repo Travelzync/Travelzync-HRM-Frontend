@@ -18,7 +18,7 @@ export default function EmployeeHeader({ onMenuClick }) {
       {/* Greeting */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 16, fontWeight: 700, color: '#111827', lineHeight: 1.2 }} className="responsive-header-greeting truncate">
-          {greeting}, JOHN DOE! 👋
+          {greeting}, Ashfak Nasar
         </p>
         <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 3 }} className="responsive-header-greeting-sub">Here's what's happening with your work today.</p>
       </div>
