@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Clock, Timer, CalendarDays, Home, Package,
   Umbrella, Bell, CheckSquare, Video, FileText, ClipboardList,
   LogOut, Settings, MessageSquare, Workflow, BarChart2,
-  Users, Building2, DollarSign, Gift,
+  Users, Building2, DollarSign, Gift, ShieldAlert
 } from 'lucide-react'
 
 export const EMPLOYEE_NAV = [
@@ -29,12 +29,10 @@ export const ADMIN_NAV = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Employees', path: '/admin/employees', icon: Users },
   { label: 'Departments', path: '/admin/departments', icon: Building2 },
-  { label: 'Attendance', path: '/admin/attendance', icon: Clock },
+  { label: 'Designations', path: '/admin/designations', icon: ClipboardList },
   { label: 'Leave Management', path: '/admin/leave-management', icon: CalendarDays },
+  { label: 'Salary Structure', path: '/admin/salary-structure', icon: FileText },
   { label: 'Payroll', path: '/admin/payroll', icon: DollarSign },
-  { label: 'Assets', path: '/admin/assets', icon: Package },
-  { label: 'Holidays', path: '/admin/holidays', icon: Gift },
-  { label: 'Notifications', path: '/admin/notifications', icon: Bell },
-  { label: 'Reports', path: '/admin/reports', icon: BarChart2 },
+  { label: 'Workflow', path: '/admin/workflow', icon: Workflow },
   { label: 'Settings', path: '/admin/settings', icon: Settings },
 ]

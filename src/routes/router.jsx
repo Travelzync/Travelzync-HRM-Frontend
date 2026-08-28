@@ -36,6 +36,10 @@ import AHolidays from '../pages/admin/Holidays'
 import ANotifications from '../pages/admin/Notifications'
 import AReports from '../pages/admin/Reports'
 import ASettings from '../pages/admin/Settings'
+import Workflow from '../pages/admin/Workflow'
+import Designations from '../pages/admin/Designations'
+import Projects from '../pages/admin/Projects'
+import SalaryStructure from '../pages/admin/SalaryStructure'
 
 const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace /> },
@@ -80,14 +84,18 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'employees', element: <Employees /> },
       { path: 'departments', element: <Departments /> },
+      { path: 'designations', element: <Designations /> },
       { path: 'attendance', element: <AAttendance /> },
       { path: 'leave-management', element: <LeaveManagement /> },
+      { path: 'salary-structure', element: <SalaryStructure /> },
       { path: 'payroll', element: <Payroll /> },
+      { path: 'projects', element: <Projects /> },
       { path: 'assets', element: <AAssets /> },
       { path: 'holidays', element: <AHolidays /> },
       { path: 'notifications', element: <ANotifications /> },
       { path: 'reports', element: <AReports /> },
       { path: 'settings', element: <ASettings /> },
+      { path: 'workflow', element: <Workflow /> },
     ],
   },
 ])
