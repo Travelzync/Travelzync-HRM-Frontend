@@ -7,9 +7,11 @@ import ProtectedRoute from '../components/ProtectedRoute'
 
 // Employee pages
 import Overview from '../pages/employee/Overview'
+import Profile from '../pages/employee/Profile'
 import EAttendance from '../pages/employee/Attendance'
 import Overtime from '../pages/employee/Overtime'
 import Leave from '../pages/employee/Leave'
+import Salary from '../pages/employee/Salary'
 import WorkFromHome from '../pages/employee/WorkFromHome'
 import EAssets from '../pages/employee/Assets'
 import EHolidays from '../pages/employee/Holidays'
@@ -54,9 +56,11 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="overview" replace /> },
       { path: 'overview', element: <Overview /> },
+      { path: 'profile', element: <Profile /> },
       { path: 'attendance', element: <EAttendance /> },
       { path: 'overtime', element: <Overtime /> },
       { path: 'leave', element: <Leave /> },
+      { path: 'salary', element: <Salary /> },
       { path: 'work-from-home', element: <WorkFromHome /> },
       { path: 'assets', element: <EAssets /> },
       { path: 'holidays', element: <EHolidays /> },

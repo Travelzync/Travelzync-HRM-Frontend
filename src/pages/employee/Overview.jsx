@@ -197,8 +197,8 @@ export default function Overview() {
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 4 }}>Good Evening 🔥</p>
-            <h2 style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: 1, marginBottom: 6 }}>JOHN DOE</h2>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>MERN STACK DEVELOPER · ID: TZ-2458</p>
+            <h2 style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: 1, marginBottom: 6 }}>ASHFAK NASAR</h2>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>JUNIOR FRONTEND DEVELOPER · ID: TZ-2458</p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexShrink: 0 }} className="responsive-hero-actions">
             <button style={{

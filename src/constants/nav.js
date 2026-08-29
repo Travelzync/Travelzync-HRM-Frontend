@@ -2,21 +2,23 @@ import {
   LayoutDashboard, Clock, Timer, CalendarDays, Home, Package,
   Umbrella, Bell, CheckSquare, Video, FileText, ClipboardList,
   LogOut, Settings, MessageSquare, Workflow, BarChart2,
-  Users, Building2, DollarSign, Gift, ShieldAlert
+  Users, Building2, DollarSign, Gift, ShieldAlert, User
 } from 'lucide-react'
 
 export const EMPLOYEE_NAV = [
   { label: 'Overview', path: '/employee/overview', icon: LayoutDashboard },
+  { label: 'My Profile', path: '/employee/profile', icon: User },
   { label: 'Attendance', path: '/employee/attendance', icon: Clock },
   { label: 'Overtime', path: '/employee/overtime', icon: Timer },
   { label: 'Leave', path: '/employee/leave', icon: CalendarDays },
+  { label: 'My Salary', path: '/employee/salary', icon: DollarSign },
   { label: 'Work From Home', path: '/employee/work-from-home', icon: Home },
   { label: 'Assets', path: '/employee/assets', icon: Package },
   { label: 'Holidays', path: '/employee/holidays', icon: Umbrella },
   { label: 'Notifications', path: '/employee/notifications', icon: Bell },
   { label: 'Tasks', path: '/employee/tasks', icon: CheckSquare },
   { label: 'Meeting Hub', path: '/employee/meeting-hub', icon: Video },
-  { label: 'My Payslips', path: '/employee/payslips', icon: FileText },
+  { label: 'My Payroll', path: '/employee/payslips', icon: FileText },
   { label: 'Attendance Req', path: '/employee/attendance-request', icon: ClipboardList },
   { label: 'Resign', path: '/employee/resignation', icon: LogOut },
   { label: 'Settings', path: '/employee/settings', icon: Settings },
