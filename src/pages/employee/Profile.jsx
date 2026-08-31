@@ -8,7 +8,7 @@ export default function Profile() {
   const [profileData, setProfileData] = useState({
     fullName: 'Ashfak Nasar',
     employeeId: 'TZ-2458',
-    email: 'ashfak.nasar@travelzync.com',
+    email: 'ashfaknasar@travelzync.com',
     phone: '8078566945',
     dob: '16 Apr 2004',
     gender: 'Male',
