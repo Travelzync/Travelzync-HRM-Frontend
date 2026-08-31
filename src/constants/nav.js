@@ -10,7 +10,7 @@ export const EMPLOYEE_NAV = [
   { label: 'My Profile', path: '/employee/profile', icon: User },
   { label: 'Attendance', path: '/employee/attendance', icon: Clock },
   { label: 'Overtime', path: '/employee/overtime', icon: Timer },
-  { label: 'Leave', path: '/employee/leave', icon: CalendarDays },
+  { label: 'My Leave', path: '/employee/leave', icon: CalendarDays },
   { label: 'My Salary', path: '/employee/salary', icon: DollarSign },
   { label: 'Work From Home', path: '/employee/work-from-home', icon: Home },
   { label: 'Assets', path: '/employee/assets', icon: Package },

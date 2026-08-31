@@ -329,21 +329,6 @@ export default function Leave() {
             <span style={{ width: 4, height: 16, background: '#c0392b', borderRadius: 2 }} />
             Leave Requests
           </h3>
-          <button
-            onClick={() => setModalOpen(true)}
-            style={{
-              background: '#c0392b',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              padding: '6px 14px',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            + Apply Leave
-          </button>
         </div>
 
         <div style={{ overflowX: 'auto' }} className="hide-scroll">
