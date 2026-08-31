@@ -2,21 +2,20 @@ import { useState } from 'react'
 import { Wallet, Eye, CheckCircle2, Info, X, DollarSign, ArrowUpRight, HelpCircle, Landmark } from 'lucide-react'
 
 const SALARY_HISTORY_DATA = [
-  { id: 1, month: 'August', year: '2026', grossSalary: 23000, deductions: 2000, netSalary: 21000, status: 'Paid', paidAt: '25 Aug 2026 06:00 PM', paymentRef: 'TXN-20260825-4819' },
-  { id: 2, month: 'July', year: '2026', grossSalary: 23000, deductions: 2000, netSalary: 21000, status: 'Paid', paidAt: '25 Jul 2026 05:00 PM', paymentRef: 'TXN-20260725-3912' },
-  { id: 3, month: 'June', year: '2026', grossSalary: 23000, deductions: 2000, netSalary: 21000, status: 'Paid', paidAt: '25 Jun 2026 04:30 PM', paymentRef: 'TXN-20260625-1823' },
-  { id: 4, month: 'May', year: '2026', grossSalary: 23000, deductions: 2000, netSalary: 21000, status: 'Paid', paidAt: '25 May 2026 06:12 PM', paymentRef: 'TXN-20260525-0841' },
-  { id: 5, month: 'April', year: '2026', grossSalary: 23000, deductions: 2000, netSalary: 21000, status: 'Paid', paidAt: '25 Apr 2026 05:45 PM', paymentRef: 'TXN-20260425-9923' }
+  { id: 1, month: 'August', year: '2026', grossSalary: 23000, deductions: 200, netSalary: 22800, status: 'Paid', paidAt: '25 Aug 2026 06:00 PM', paymentRef: 'TXN-20260825-4819' },
+  { id: 2, month: 'July', year: '2026', grossSalary: 23000, deductions: 200, netSalary: 22800, status: 'Paid', paidAt: '25 Jul 2026 05:00 PM', paymentRef: 'TXN-20260725-3912' },
+  { id: 3, month: 'June', year: '2026', grossSalary: 23000, deductions: 200, netSalary: 22800, status: 'Paid', paidAt: '25 Jun 2026 04:30 PM', paymentRef: 'TXN-20260625-1823' },
+  { id: 4, month: 'May', year: '2026', grossSalary: 23000, deductions: 200, netSalary: 22800, status: 'Paid', paidAt: '25 May 2026 06:12 PM', paymentRef: 'TXN-20260525-0841' },
+  { id: 5, month: 'April', year: '2026', grossSalary: 23000, deductions: 200, netSalary: 22800, status: 'Paid', paidAt: '25 Apr 2026 05:45 PM', paymentRef: 'TXN-20260425-9923' }
 ]
 
 const ALLOWANCES_LIST = [
-  { label: 'House Rent Allowance (HRA)', value: 3500 },
+  { label: 'HRA', value: 3500 },
   { label: 'Travel Allowance', value: 1500 }
 ]
 
 const DEDUCTIONS_LIST = [
-  { label: 'Professional Tax (PT)', value: 200 },
-  { label: 'Provident Fund (PF)', value: 1800 }
+  { label: 'Professional Tax', value: 200 }
 ]
 
 export default function Salary() {
@@ -35,6 +34,16 @@ export default function Salary() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', paddingBottom: 24 }}>
       
+      {/* Title & Breadcrumbs */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b' }}>My Salary</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748b' }}>
+          <span>Home</span>
+          <span>&gt;</span>
+          <span style={{ color: '#c0392b', fontWeight: 500 }}>My Salary</span>
+        </div>
+      </div>
+
       {/* Current Month Net Salary Banner */}
       <div style={{
         background: '#fff',
@@ -64,8 +73,8 @@ export default function Salary() {
           </div>
           <div>
             <p style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: 6 }}>Current Month (August 2026) Net Salary</p>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-              ₹21,000
+            <h2 style={{ fontSize: 26, fontWeight: 800, color: '#c0392b', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+              ₹22,800
             </h2>
           </div>
         </div>
@@ -186,7 +195,7 @@ export default function Salary() {
           gap: 20
         }}>
           {/* Allowances */}
-          <div style={{ background: '#f8fafc', borderRadius: 12, padding: 18, border: '1px solid #f1f5f9' }}>
+          <div style={{ background: '#f8fafc', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 12 }}>Allowances</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {ALLOWANCES_LIST.map((allowance, index) => (
@@ -214,7 +223,9 @@ export default function Salary() {
               ))}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, borderTop: '1px solid #fde8e8', paddingTop: 8, marginTop: 4 }}>
                 <span style={{ fontWeight: 700, color: '#c0392b' }}>Total Deductions</span>
-                <span style={{ fontWeight: 700, color: '#c0392b' }}>₹2,000</span>
+                <span style={{ fontWeight: 700, color: '#c0392b' }}>
+                  ₹{DEDUCTIONS_LIST.reduce((acc, curr) => acc + curr.value, 0).toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -226,11 +237,11 @@ export default function Salary() {
               <span style={{ fontWeight: 700, color: '#1e293b' }}>₹18,000</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, borderBottom: '1px solid #f1f5f9', paddingBottom: 6 }}>
-              <span style={{ color: '#64748b' }}>Effective Date</span>
+              <span style={{ color: '#64748b' }}>Effective From</span>
               <span style={{ fontWeight: 500, color: '#1e293b' }}>01 Aug 2026</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-              <span style={{ color: '#64748b' }}>Active Status</span>
+              <span style={{ color: '#64748b' }}>Active</span>
               <span style={{
                 background: '#e8f5e9',
                 color: '#2e7d32',

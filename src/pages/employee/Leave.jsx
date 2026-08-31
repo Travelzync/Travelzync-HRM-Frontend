@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Calendar, Search, FileText, AlertCircle, X, ChevronDown, CheckCircle2, SlidersHorizontal, Trash2 } from 'lucide-react'
+import { Calendar, Search, FileText, AlertCircle, X, ChevronDown, CheckCircle2, SlidersHorizontal, Trash2, List, Info } from 'lucide-react'
 
 // Initial leave records with unique dates and reasons
 const INITIAL_LEAVES = [
@@ -8,7 +8,7 @@ const INITIAL_LEAVES = [
   { id: 3, leaveType: 'Earned Leave', from: '28 Jul 2026', to: '30 Jul 2026', days: 3, reason: "Sister's graduation ceremony", status: 'Approved', appliedOn: '24 Jul 2026 10:15 AM', adminRemarks: '-', processedBy: 'HR Manager', processedAt: '25 Jul 2026 11:30 AM', createdAt: '24 Jul 2026 10:15 AM', lastUpdated: '25 Jul 2026 11:30 AM' },
   { id: 4, leaveType: 'Casual Leave', from: '15 Jun 2026', to: '15 Jun 2026', days: 1, reason: 'Government office documentation', status: 'Rejected', appliedOn: '14 Jun 2026 02:00 PM', adminRemarks: 'Understaffed on this day', processedBy: 'Project Lead', processedAt: '14 Jun 2026 04:30 PM', createdAt: '14 Jun 2026 02:00 PM', lastUpdated: '14 Jun 2026 04:30 PM' },
   { id: 5, leaveType: 'Sick Leave', from: '05 Jun 2026', to: '06 Jun 2026', days: 2, reason: 'Migraine attack recovery', status: 'Approved', appliedOn: '04 Jun 2026 08:45 AM', adminRemarks: '-', processedBy: 'HR Manager', processedAt: '04 Jun 2026 12:00 PM', createdAt: '04 Jun 2026 08:45 AM', lastUpdated: '04 Jun 2026 12:00 PM' },
-  { id: 6, leaveType: 'Earned Leave', from: '22 May 2026', to: '24 May 2026', days: 3, reason: 'Weekend getaway to Wayanad', status: 'Pending', appliedOn: '20 May 2026 04:10 PM', adminRemarks: '-', processedBy: '-', processedAt: '-', createdAt: '20 May 2026 04:10 PM', lastUpdated: '20 May 2026 04:10 PM' },
+  { id: 6, leaveType: 'Earned Leave', from: '02 Jun 2026', to: '04 Jun 2026', days: 3, reason: 'Weekend getaway to Wayanad', status: 'Pending', appliedOn: '20 May 2026 04:10 PM', adminRemarks: '-', processedBy: '-', processedAt: '-', createdAt: '20 May 2026 04:10 PM', lastUpdated: '20 May 2026 04:10 PM' },
   { id: 7, leaveType: 'Casual Leave', from: '10 May 2026', to: '10 May 2026', days: 1, reason: 'Home appliance delivery', status: 'Approved', appliedOn: '09 May 2026 01:15 PM', adminRemarks: '-', processedBy: 'Project Lead', processedAt: '09 May 2026 03:00 PM', createdAt: '09 May 2026 01:15 PM', lastUpdated: '09 May 2026 03:00 PM' }
 ]
 
@@ -111,6 +111,16 @@ export default function Leave() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', paddingBottom: 24 }}>
       
+      {/* Title & Breadcrumbs */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b' }}>My Leave</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748b' }}>
+          <span>Home</span>
+          <span>&gt;</span>
+          <span style={{ color: '#c0392b', fontWeight: 500 }}>My Leave</span>
+        </div>
+      </div>
+
       {/* 1. Statistics Summary Row (Unified Card Banner) */}
       <div style={{
         background: '#fff',
@@ -245,26 +255,44 @@ export default function Leave() {
             </div>
           </div>
 
-          {/* Clear Filters Button */}
-          {(statusFilter !== 'All' || typeFilter !== 'All') && (
-            <button
-              onClick={handleClearFilters}
+          {/* Date Range Selector */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Date Range</span>
+            <input 
+              type="text" 
+              placeholder="Select date range" 
+              readOnly
               style={{
-                background: 'none',
-                border: 'none',
-                color: '#c0392b',
-                fontSize: 12,
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                marginTop: 18
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                fontSize: 13,
+                color: '#94a3b8',
+                outline: 'none',
+                width: 160
               }}
-            >
-              Clear Filters
-            </button>
-          )}
+            />
+          </div>
+
+          {/* Clear Filters Button */}
+          <button
+            onClick={handleClearFilters}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#c0392b',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              marginTop: 18
+            }}
+          >
+            Clear Filters
+          </button>
         </div>
 
         {/* Apply Leave Trigger Button */}
@@ -296,10 +324,27 @@ export default function Leave() {
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         overflow: 'hidden'
       }}>
-        <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 16, marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 4, height: 16, background: '#c0392b', borderRadius: 2 }} />
-          Leave Requests
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 4, height: 16, background: '#c0392b', borderRadius: 2 }} />
+            Leave Requests
+          </h3>
+          <button
+            onClick={() => setModalOpen(true)}
+            style={{
+              background: '#c0392b',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 6,
+              padding: '6px 14px',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            + Apply Leave
+          </button>
+        </div>
 
         <div style={{ overflowX: 'auto' }} className="hide-scroll">
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>

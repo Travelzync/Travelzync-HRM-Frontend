@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, DollarSign, Clock, FileText, CheckCircle2, ChevronDown, Info, ShieldCheck, Download, CreditCard, Landmark } from 'lucide-react'
+import { Calendar, DollarSign, Clock, FileText, CheckCircle2, ChevronDown, Info, ShieldCheck, Download, CreditCard, Landmark, BookOpen } from 'lucide-react'
 
 const JUNIOR_DEV_PAYROLL = {
   'August 2026': {
@@ -17,8 +17,8 @@ const JUNIOR_DEV_PAYROLL = {
     basicSalary: 18000,
     allowances: 5000, // HRA 3500 + Travel 1500
     grossSalary: 23000,
-    deductions: 2000, // PF 1800 + PT 200
-    netSalary: 21000,
+    deductions: 200, // PF is deleted, only PT 200
+    netSalary: 22800,
     
     // Attendance Summary
     workingDays: 22,
@@ -27,7 +27,7 @@ const JUNIOR_DEV_PAYROLL = {
     absentDays: 1,
     paidDays: 21,
     lopDays: 1,
-    lopAmount: 1000, // LOP deduction for absent day
+    lopAmount: 1000,
     
     // Salary Structure
     structure: {
@@ -35,7 +35,6 @@ const JUNIOR_DEV_PAYROLL = {
       hra: 3500,
       travel: 1500,
       profTax: 200,
-      provFund: 1800,
       effectiveFrom: '01 Aug 2026',
       active: 'Yes'
     }
@@ -55,8 +54,8 @@ const JUNIOR_DEV_PAYROLL = {
     basicSalary: 18000,
     allowances: 5000,
     grossSalary: 23000,
-    deductions: 2000,
-    netSalary: 21000,
+    deductions: 200, // PF is deleted, only PT 200
+    netSalary: 22800,
     
     // Attendance Summary
     workingDays: 23,
@@ -73,7 +72,6 @@ const JUNIOR_DEV_PAYROLL = {
       hra: 3500,
       travel: 1500,
       profTax: 200,
-      provFund: 1800,
       effectiveFrom: '01 Jul 2026',
       active: 'Yes'
     }
@@ -95,6 +93,16 @@ export default function Payslips() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', paddingBottom: 24 }}>
+      {/* Title & Breadcrumbs */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#1e293b' }}>My Payroll</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#64748b' }}>
+          <span>Home</span>
+          <span>&gt;</span>
+          <span style={{ color: '#c0392b', fontWeight: 500 }}>My Payroll</span>
+        </div>
+      </div>
+
       {/* Month Selector & Status Header Card */}
       <div style={{
         background: '#fff',
@@ -122,34 +130,43 @@ export default function Payslips() {
           }}>
             <Calendar size={22} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Select Pay Period</label>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                style={{
-                  padding: '6px 36px 6px 12px',
-                  borderRadius: 8,
-                  border: '1px solid #c0392b',
-                  background: '#fff',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: '#1e293b',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  appearance: 'none'
-                }}
-              >
-                <option value="August 2026">August 2026</option>
-                <option value="July 2026">July 2026</option>
-              </select>
-              <ChevronDown size={14} color="#c0392b" style={{ position: 'absolute', right: 12, top: 10, pointerEvents: 'none' }} />
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <label style={{ fontSize: 10, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>Month</label>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  style={{
+                    padding: '6px 36px 6px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #c0392b',
+                    background: '#fff',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#1e293b',
+                    outline: 'none',
+                    cursor: 'pointer',
+                    appearance: 'none'
+                  }}
+                >
+                  <option value="August 2026">August 2026</option>
+                  <option value="July 2026">July 2026</option>
+                </select>
+                <ChevronDown size={14} color="#c0392b" style={{ position: 'absolute', right: 12, top: 10, pointerEvents: 'none' }} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <label style={{ fontSize: 10, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>Year</label>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#f8fafc' }}>
+                2026
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Status Badge & Download Action */}
+        {/* Right Side: Status Badge & Action */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ textAlign: 'right' }}>
             <span style={{
@@ -193,10 +210,7 @@ export default function Payslips() {
             }}
           >
             {downloading ? (
-              <>
-                <span className="animate-spin" style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%' }} />
-                Generating...
-              </>
+              'Generating...'
             ) : (
               <>
                 <Download size={15} /> Download Payslip
@@ -206,7 +220,7 @@ export default function Payslips() {
         </div>
       </div>
 
-      {/* Salary Summary Card */}
+      {/* Salary Summary Card (Full Width stacked) */}
       <div style={{
         background: '#fff',
         borderRadius: 16,
@@ -221,36 +235,36 @@ export default function Payslips() {
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gridTemplateColumns: 'repeat(5, 1fr)',
           gap: 16
-        }}>
+        }} className="responsive-stats-grid-4">
           {[
             { label: 'Basic Salary', val: `₹${currentData.basicSalary.toLocaleString()}`, color: '#1e293b' },
-            { label: 'Total Allowances', val: `₹${currentData.allowances.toLocaleString()}`, color: '#2e7d32' },
+            { label: 'Total Allowances', val: `₹${currentData.allowances.toLocaleString()}`, color: '#1e293b' },
             { label: 'Gross Salary', val: `₹${currentData.grossSalary.toLocaleString()}`, color: '#1e293b' },
-            { label: 'Total Deductions', val: `₹${currentData.deductions.toLocaleString()}`, color: '#c0392b' },
-            { label: 'Net Take-home', val: `₹${currentData.netSalary.toLocaleString()}`, color: '#2e7d32', bg: '#f1f8e9', border: '1px solid #d4e157' }
+            { label: 'Total Deductions', val: `₹${currentData.deductions.toLocaleString()}`, color: '#1e293b' },
+            { label: 'Net Salary', val: `₹${currentData.netSalary.toLocaleString()}`, color: '#2e7d32', bg: '#f1f8e9', border: '1px solid #d4e157' }
           ].map((item, index) => (
             <div
               key={index}
               style={{
-                padding: '16px 20px',
+                padding: '12px 16px',
                 borderRadius: 12,
                 border: item.border || '1px solid #f1f5f9',
                 background: item.bg || '#f8fafc',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 6
+                gap: 4
               }}
             >
               <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{item.label}</span>
-              <span style={{ fontSize: 20, fontWeight: 700, color: item.color }}>{item.val}</span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: item.color }}>{item.val}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Attendance Summary Card */}
+      {/* Attendance Summary Card (Full Width stacked) */}
       <div style={{
         background: '#fff',
         borderRadius: 16,
@@ -260,21 +274,21 @@ export default function Payslips() {
       }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 16, marginTop: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ width: 4, height: 16, background: '#c0392b', borderRadius: 2 }} />
-          Attendance & LOP Summary
+          Attendance Summary
         </h3>
 
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+          gridTemplateColumns: 'repeat(7, 1fr)',
           gap: 12
-        }}>
+        }} className="responsive-stats-grid-4">
           {[
             { label: 'Working Days', val: currentData.workingDays },
             { label: 'Present Days', val: currentData.presentDays },
             { label: 'Leave Days', val: currentData.leaveDays },
             { label: 'Absent Days', val: currentData.absentDays },
             { label: 'Paid Days', val: currentData.paidDays },
-            { label: 'LOP Days', val: currentData.lopDays, color: currentData.lopDays > 0 ? '#c0392b' : '#334155' },
+            { label: 'LOP Days', val: currentData.lopDays },
             { label: 'LOP Amount', val: `₹${currentData.lopAmount.toLocaleString()}`, color: currentData.lopAmount > 0 ? '#c0392b' : '#334155' }
           ].map((item, index) => (
             <div
@@ -284,11 +298,11 @@ export default function Payslips() {
                 borderRadius: 10,
                 border: '1px solid #f1f5f9',
                 textAlign: 'center',
-                background: '#fff'
+                background: '#f8fafc'
               }}
             >
               <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: 4 }}>{item.label}</span>
-              <span style={{ fontSize: 16, fontWeight: 700, color: item.color || '#334155' }}>{item.val}</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: item.color || '#334155' }}>{item.val}</span>
             </div>
           ))}
         </div>
@@ -313,24 +327,19 @@ export default function Payslips() {
         }}>
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: 0, paddingBottom: 12, borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 4, height: 16, background: '#c0392b', borderRadius: 2 }} />
-            Transaction Details
+            Payroll Details
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
-              { label: 'Payment Status', val: currentData.status, isBadge: true },
-              { label: 'Bank Name', val: currentData.bankName, icon: Landmark },
-              { label: 'Bank Account', val: currentData.accountNo, icon: CreditCard },
+              { label: 'Status', val: currentData.status, isBadge: true },
               { label: 'Processed At', val: currentData.processedAt },
               { label: 'Paid At', val: currentData.paidAt },
               { label: 'Payment Reference', val: currentData.paymentRef },
               { label: 'Remarks', val: currentData.remarks }
             ].map((row, index) => (
               <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, borderBottom: '1px solid #fafafa', paddingBottom: 8 }}>
-                <span style={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {row.icon && <row.icon size={13} color="#94a3b8" />}
-                  {row.label}
-                </span>
+                <span style={{ color: '#64748b' }}>{row.label}</span>
                 {row.isBadge ? (
                   <span style={{
                     background: '#e8f5e9',
@@ -361,7 +370,7 @@ export default function Payslips() {
         }}>
           <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', margin: 0, paddingBottom: 12, borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 4, height: 16, background: '#c0392b', borderRadius: 2 }} />
-            Allowances & Structure
+            Salary Structure
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -373,7 +382,7 @@ export default function Payslips() {
             {/* Allowances Subheading */}
             <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', marginTop: 4 }}>Allowances</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, paddingLeft: 10 }}>
-              <span style={{ color: '#64748b' }}>House Rent Allowance (HRA)</span>
+              <span style={{ color: '#64748b' }}>HRA</span>
               <span style={{ fontWeight: 500, color: '#1e293b' }}>₹{currentData.structure.hra.toLocaleString()}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, paddingLeft: 10 }}>
@@ -384,20 +393,16 @@ export default function Payslips() {
             {/* Deductions Subheading */}
             <div style={{ fontSize: 11, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', marginTop: 4 }}>Deductions</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, paddingLeft: 10 }}>
-              <span style={{ color: '#64748b' }}>Professional Tax (PT)</span>
+              <span style={{ color: '#64748b' }}>Professional Tax</span>
               <span style={{ fontWeight: 500, color: '#c0392b' }}>₹{currentData.structure.profTax}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, paddingLeft: 10 }}>
-              <span style={{ color: '#64748b' }}>Provident Fund (PF)</span>
-              <span style={{ fontWeight: 500, color: '#c0392b' }}>₹{currentData.structure.provFund.toLocaleString()}</span>
             </div>
 
             <div style={{ borderTop: '1px solid #f1f5f9', marginTop: 8, paddingTop: 10, display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-              <span style={{ color: '#64748b' }}>Effective Date</span>
+              <span style={{ color: '#64748b' }}>Effective From</span>
               <span style={{ fontWeight: 500, color: '#1e293b' }}>{currentData.structure.effectiveFrom}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-              <span style={{ color: '#64748b' }}>Active Status</span>
+              <span style={{ color: '#64748b' }}>Active</span>
               <span style={{
                 background: '#e8f5e9',
                 color: '#2e7d32',
@@ -423,7 +428,7 @@ export default function Payslips() {
       }}>
         <Info size={18} color="#3b82f6" style={{ flexShrink: 0 }} />
         <span style={{ fontSize: 13, color: '#1e40af' }}>
-          This payroll summary and allowance breakdown is for the month of <strong>{selectedMonth}</strong>.
+          This payroll summary is for the month of {selectedMonth}.
         </span>
       </div>
     </div>
