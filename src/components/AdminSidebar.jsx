@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { ADMIN_NAV } from '../constants/nav'
+import logoImg from '../assets/logo.jpg'
 
 export default function AdminSidebar({ isOpen, onClose }) {
   return (
@@ -17,15 +18,18 @@ export default function AdminSidebar({ isOpen, onClose }) {
         {/* Logo */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 10, background: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L4 7v10l8 5 8-5V7L12 2z" fill="#c0392b" />
-                <path d="M12 2v20M4 7l8 5 8-5" stroke="#fff" strokeWidth="1.5" fill="none" />
-              </svg>
-            </div>
+            <img
+              src={logoImg}
+              alt="TravelZync Logo"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                objectFit: 'cover',
+                flexShrink: 0,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              }}
+            />
             <div>
               <p style={{ color: '#fff', fontWeight: 700, fontSize: 15, lineHeight: 1 }}>TravelZync</p>
               <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 10, marginTop: 3, letterSpacing: '0.05em' }}>ADMIN</p>

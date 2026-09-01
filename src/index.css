@@ -147,3 +147,295 @@ body {
   }
 }
 
+/* ── Professional Dark Mode ── */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body,
+html.dark .responsive-layout-wrapper {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
+}
+
+/* ── Sidebars in Dark Mode ── */
+html.dark aside {
+  background: #0d1322 !important;
+  border-right: 1px solid #1e293b !important;
+}
+
+html.dark aside div[style*="border-bottom"],
+html.dark aside div[style*="border-top"],
+html.dark aside div[style*="borderBottom"],
+html.dark aside div[style*="borderTop"] {
+  border-color: #1e293b !important;
+}
+
+html.dark aside a,
+html.dark aside button {
+  color: #94a3b8 !important;
+}
+
+html.dark aside a:hover,
+html.dark aside button:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
+}
+
+/* Active Sidebar Navigation Links */
+html.dark aside a.active,
+html.dark aside a[style*="background: rgb(255, 255, 255)"],
+html.dark aside a[style*="background: #fff"],
+html.dark aside a[style*="background:#fff"],
+html.dark aside button[style*="background: rgb(255, 255, 255)"],
+html.dark aside button[style*="background: #fff"],
+html.dark aside button[style*="background:#fff"] {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35) !important;
+}
+
+html.dark aside a.active svg,
+html.dark aside a[style*="background: #fff"] svg,
+html.dark aside button[style*="background: #fff"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+html.dark aside a.active span,
+html.dark aside button[style*="background: #fff"] span {
+  color: #ffffff !important;
+}
+
+/* Sidebar Badges */
+html.dark aside a.active span[style*="background: #fff"],
+html.dark aside a.active span[style*="background:#fff"] {
+  background-color: #ffffff !important;
+  color: #ef4444 !important;
+}
+
+html.dark aside span[style*="background: #fff"],
+html.dark aside span[style*="background:#fff"] {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark aside input {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* ── Header & Footer ── */
+html.dark header,
+html.dark .responsive-header {
+  background-color: #0d1322 !important;
+  border-bottom: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark footer,
+html.dark .responsive-footer {
+  background-color: #0d1322 !important;
+  border-top: 1px solid #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+html.dark .responsive-header-search {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .responsive-header-search input {
+  color: #f8fafc !important;
+}
+
+html.dark .responsive-header-search span {
+  background-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+/* ── Cards, Modals & Surfaces ── */
+html.dark main div[style*="background: #fff"],
+html.dark main div[style*="background:#fff"],
+html.dark main div[style*="background: rgb(255, 255, 255)"],
+html.dark main div[style*="background: white"],
+html.dark main section[style*="background: #fff"],
+html.dark main section[style*="background:#fff"],
+html.dark .bg-white:not(aside):not(aside *),
+html.dark .fixed > div[style*="background: #fff"],
+html.dark .fixed > div[style*="background:#fff"],
+html.dark .fixed > div[style*="background: white"],
+html.dark [role="dialog"] {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4) !important;
+  color: #f8fafc !important;
+}
+
+/* Sub-panels and muted surfaces */
+html.dark main div[style*="background: #f8fafc"],
+html.dark main div[style*="background:#f8fafc"],
+html.dark main div[style*="background: #f9fafb"],
+html.dark main div[style*="background:#f9fafb"],
+html.dark main div[style*="background: #f1f5f9"],
+html.dark main div[style*="background:#f1f5f9"],
+html.dark .bg-gray-50,
+html.dark .bg-slate-50 {
+  background-color: #0d1322 !important;
+  border-color: #1e293b !important;
+}
+
+/* ── Inputs & Form Controls ── */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+  border-color: #ef4444 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* ── Typography Overrides ── */
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6 {
+  color: #f8fafc !important;
+}
+
+html.dark [style*="color: #111827"],
+html.dark [style*="color:#111827"],
+html.dark [style*="color: #0f172a"],
+html.dark [style*="color:#0f172a"],
+html.dark [style*="color: #1e293b"],
+html.dark [style*="color:#1e293b"],
+html.dark .text-gray-900,
+html.dark .text-gray-800 {
+  color: #f8fafc !important;
+}
+
+html.dark [style*="color: #374151"],
+html.dark [style*="color:#374151"],
+html.dark [style*="color: #4b5563"],
+html.dark [style*="color:#4b5563"],
+html.dark .text-gray-700,
+html.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+html.dark [style*="color: #64748b"],
+html.dark [style*="color:#64748b"],
+html.dark [style*="color: #6b7280"],
+html.dark [style*="color:#6b7280"],
+html.dark [style*="color: #94a3b8"],
+html.dark [style*="color:#94a3b8"],
+html.dark [style*="color: #9ca3af"],
+html.dark [style*="color:#9ca3af"],
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+/* ── Tables & Data Grids ── */
+html.dark table {
+  border-color: #1e293b !important;
+}
+
+html.dark thead,
+html.dark thead tr,
+html.dark th {
+  background-color: #090d16 !important;
+  color: #94a3b8 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark td,
+html.dark tr {
+  border-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+html.dark tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* ── General Borders & Dividers ── */
+html.dark [style*="border: 1px solid #f1f5f9"],
+html.dark [style*="border: 1px solid #e2e8f0"],
+html.dark [style*="border-bottom: 1px solid #f1f5f9"],
+html.dark [style*="border-bottom: 1px solid #e2e8f0"],
+html.dark [style*="border-top: 1px solid #f1f5f9"],
+html.dark [style*="border-top: 1px solid #e2e8f0"],
+html.dark [style*="border: 1px solid #e5e7eb"],
+html.dark [style*="border-color: #e2e8f0"],
+html.dark [style*="border-color: #f1f5f9"],
+html.dark .border-gray-100,
+html.dark .border-gray-200 {
+  border-color: #1e293b !important;
+}
+
+/* ── Stat Card Pastel Tints ── */
+html.dark [style*="background: #eff6ff"], html.dark [style*="background:#eff6ff"] { background: rgba(59, 130, 246, 0.15) !important; }
+html.dark [style*="background: #f0fdf4"], html.dark [style*="background:#f0fdf4"] { background: rgba(34, 197, 94, 0.15) !important; }
+html.dark [style*="background: #fff7ed"], html.dark [style*="background:#fff7ed"] { background: rgba(249, 115, 22, 0.15) !important; }
+html.dark [style*="background: #fef2f2"], html.dark [style*="background:#fef2f2"] { background: rgba(239, 68, 68, 0.15) !important; }
+html.dark [style*="background: #f5f3ff"], html.dark [style*="background:#f5f3ff"] { background: rgba(139, 92, 246, 0.15) !important; }
+html.dark [style*="background: #fdf2f8"], html.dark [style*="background:#fdf2f8"] { background: rgba(236, 72, 153, 0.15) !important; }
+html.dark [style*="background: #fefce8"], html.dark [style*="background:#fefce8"] { background: rgba(234, 179, 8, 0.15) !important; }
+
+/* ── Login Page Dark Mode ── */
+html.dark .login-right-panel {
+  background-color: #090d16 !important;
+}
+
+html.dark .login-card {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .login-title {
+  color: #f8fafc !important;
+}
+
+html.dark .login-subtitle {
+  color: #94a3b8 !important;
+}
+
+html.dark .login-label {
+  color: #cbd5e1 !important;
+}
+
+html.dark .login-input {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .login-input:focus {
+  border-color: #ef4444 !important;
+}
+
+html.dark .login-remember {
+  color: #94a3b8 !important;
+}
+
+html.dark .login-footer {
+  color: #64748b !important;
+}
+
+
+

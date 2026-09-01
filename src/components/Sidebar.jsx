@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { X } from 'lucide-react'
+import logoImg from '../assets/logo.jpg'
 
 export default function Sidebar({ navItems, isOpen, onClose }) {
   return (
@@ -20,13 +21,15 @@ export default function Sidebar({ navItems, isOpen, onClose }) {
         `}
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">TZ</span>
-            </div>
+          <div className="flex items-center gap-2.5">
+            <img
+              src={logoImg}
+              alt="TravelZync Logo"
+              className="w-8 h-8 rounded-lg object-cover shrink-0 shadow-sm"
+            />
             <div>
               <p className="text-sm font-bold text-gray-900 leading-none">TravelZync</p>
-              <p className="text-[10px] text-red-500 font-medium tracking-wide uppercase">HRM</p>
+              <p className="text-[10px] text-red-500 font-medium tracking-wide uppercase mt-0.5">HRM</p>
             </div>
           </div>
           <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-gray-600">

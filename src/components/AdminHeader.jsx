@@ -1,6 +1,8 @@
-import { Search, Sun, Bell, Menu } from 'lucide-react'
+import { Search, Sun, Moon, Bell, Menu } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext'
 
 export default function AdminHeader({ onMenuClick }) {
+  const { theme, toggleTheme } = useTheme()
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
 
@@ -35,8 +37,12 @@ export default function AdminHeader({ onMenuClick }) {
         <span style={{ fontSize: 10, color: '#94a3b8', background: '#e2e8f0', borderRadius: 4, padding: '2px 5px' }}>Ctrl+K</span>
       </div>
 
-      <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 6 }}>
-        <Sun size={18} />
+      <button 
+        onClick={toggleTheme}
+        title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6 }}
+      >
+        {theme === 'dark' ? <Moon size={18} color="#f59e0b" /> : <Sun size={18} />}
       </button>
 
       <div style={{ position: 'relative' }}>

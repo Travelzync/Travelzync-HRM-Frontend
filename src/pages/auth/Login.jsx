@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Shield, Users, TrendingUp, Globe } from 'lucide-react'
+import { Eye, EyeOff, Shield, Users, TrendingUp, Globe, Sun, Moon } from 'lucide-react'
+import { useTheme } from '../../context/ThemeContext'
+import logoImg from '../../assets/logo.jpg'
 
 const features = [
   { icon: Users, text: 'Manage your entire workforce' },
@@ -16,6 +18,7 @@ const stats = [
 ]
 
 export default function Login() {
+  const { theme, toggleTheme } = useTheme()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -72,14 +75,17 @@ export default function Login() {
         {/* Logo */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 64 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 12,
-              background: 'rgba(255,255,255,0.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backdropFilter: 'blur(8px)',
-            }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>TZ</span>
-            </div>
+            <img
+              src={logoImg}
+              alt="TravelZync Logo"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                objectFit: 'cover',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              }}
+            />
             <div>
               <p style={{ color: '#fff', fontWeight: 700, fontSize: 18, lineHeight: 1 }}>TravelZync</p>
               <p style={{ color: '#fca5a5', fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 3 }}>HRM Platform</p>
@@ -125,49 +131,81 @@ export default function Login() {
       </div>
 
       {/* ── Right Login Panel ── */}
-      <div style={{
-        flex: 1,
-        background: '#f8fafc',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 24px',
-      }}>
+      <div 
+        style={{
+          flex: 1,
+          background: '#f8fafc',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px 24px',
+          position: 'relative',
+        }}
+        className="login-right-panel"
+      >
+        {/* Top-Right Theme Toggle */}
+        <div style={{ position: 'absolute', top: 20, right: 20 }}>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 8,
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {theme === 'dark' ? <Moon size={20} color="#f59e0b" /> : <Sun size={20} color="#64748b" />}
+          </button>
+        </div>
+
         <div style={{ width: '100%', maxWidth: 420 }}>
 
           {/* Mobile logo */}
           <div className="flex lg:hidden" style={{ alignItems: 'center', gap: 10, marginBottom: 32 }}>
-            <div style={{
-              width: 38, height: 38, borderRadius: 10,
-              background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>TZ</span>
-            </div>
+            <img
+              src={logoImg}
+              alt="TravelZync Logo"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                objectFit: 'cover',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+              }}
+            />
             <div>
-              <p style={{ fontWeight: 700, color: '#111827', lineHeight: 1 }}>TravelZync</p>
+              <p style={{ fontWeight: 700, color: '#111827', lineHeight: 1 }} className="login-title">TravelZync</p>
               <p style={{ color: '#ef4444', fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 3 }}>HRM Platform</p>
             </div>
           </div>
 
           {/* Heading */}
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontSize: 30, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Welcome back</h1>
-            <p style={{ color: '#6b7280', fontSize: 14 }}>Sign in to your TravelZync HRM account to continue.</p>
+            <h1 style={{ fontSize: 30, fontWeight: 700, color: '#111827', marginBottom: 8 }} className="login-title">Welcome back</h1>
+            <p style={{ color: '#6b7280', fontSize: 14 }} className="login-subtitle">Sign in to your TravelZync HRM account to continue.</p>
           </div>
 
           {/* Card */}
-          <div style={{
-            background: '#fff',
-            borderRadius: 16,
-            border: '1px solid #f1f5f9',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
-            padding: 32,
-          }}>
+          <div 
+            style={{
+              background: '#fff',
+              borderRadius: 16,
+              border: '1px solid #f1f5f9',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
+              padding: 32,
+            }}
+            className="login-card"
+          >
 
             {/* Email */}
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }} className="login-label">
                 Email Address
               </label>
               <input
@@ -182,6 +220,7 @@ export default function Login() {
                   boxSizing: 'border-box',
                   transition: 'border-color 0.15s',
                 }}
+                className="login-input"
                 onFocus={e => e.target.style.borderColor = '#ef4444'}
                 onBlur={e => e.target.style.borderColor = '#e2e8f0'}
               />
@@ -190,7 +229,7 @@ export default function Login() {
             {/* Password */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.07em' }} className="login-label">
                   Password
                 </label>
                 <a href="#" style={{ fontSize: 12, color: '#ef4444', fontWeight: 500, textDecoration: 'none' }}>
@@ -211,6 +250,7 @@ export default function Login() {
                     boxSizing: 'border-box',
                     transition: 'border-color 0.15s',
                   }}
+                  className="login-input"
                   onFocus={e => e.target.style.borderColor = '#ef4444'}
                   onBlur={e => e.target.style.borderColor = '#e2e8f0'}
                 />
@@ -235,7 +275,7 @@ export default function Login() {
                 type="checkbox"
                 style={{ width: 16, height: 16, accentColor: '#ef4444', cursor: 'pointer' }}
               />
-              <label htmlFor="remember" style={{ fontSize: 14, color: '#4b5563', cursor: 'pointer', userSelect: 'none' }}>
+              <label htmlFor="remember" style={{ fontSize: 14, color: '#4b5563', cursor: 'pointer', userSelect: 'none' }} className="login-remember">
                 Remember me for 30 days
               </label>
             </div>
@@ -267,11 +307,11 @@ export default function Login() {
           </div>
 
           {/* Footer */}
-          <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', marginTop: 20 }}>
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', marginTop: 20 }} className="login-footer">
             Protected by enterprise-grade security.{' '}
             <a href="#" style={{ color: '#ef4444', textDecoration: 'none' }}>Privacy Policy</a>
           </p>
-          <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', marginTop: 6 }}>
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#9ca3af', marginTop: 6 }} className="login-footer">
             © 2025 TravelZync HRM. All rights reserved.
           </p>
         </div>

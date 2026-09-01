@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, Search, Sun, Bell } from 'lucide-react'
+import { ChevronLeft, Search, Sun, Moon, Bell } from 'lucide-react'
+import { useTheme } from '../context/ThemeContext'
 
 // Define the static list of projects matching the design details (Seclob replaced by TravelZync)
 export const PROJECTS_DATA = [
@@ -106,6 +107,7 @@ export const PROJECTS_DATA = [
 ]
 
 export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, setSelectedProjectId }) {
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('all')
@@ -188,8 +190,12 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
 
           {/* Quick Icons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', padding: 4 }}>
-              <Sun size={15} />
+            <button 
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', padding: 4, display: 'flex', alignItems: 'center' }}
+            >
+              {theme === 'dark' ? <Moon size={15} color="#f59e0b" /> : <Sun size={15} />}
             </button>
             <div style={{ position: 'relative' }}>
               <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', padding: 4 }}>
