@@ -29,7 +29,8 @@ import {
   Eye,
   Edit,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bell
 } from 'lucide-react'
 
 // Seed database for Admin Tasks
@@ -323,7 +324,7 @@ export default function Workflow() {
   }
 
   return (
-    <div style={{ background: '#f8fafc', flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div style={{ background: '#f8fafc', flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }} className="admin-workflow-container">
       
       {/* Dynamic Header row */}
       <div style={{
@@ -335,7 +336,7 @@ export default function Workflow() {
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '16px'
-      }}>
+      }} className="admin-workflow-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Mobile toggle */}
           <button 
@@ -804,6 +805,7 @@ export default function Workflow() {
               return (
                 <div 
                   key={col} 
+                  className="admin-kanban-col"
                   style={{
                     minWidth: '280px',
                     width: '280px',
@@ -821,7 +823,7 @@ export default function Workflow() {
                       <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: colColor }} />
                       <span style={{ fontSize: '11px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{col}</span>
                     </div>
-                    <span style={{ background: '#fff', color: '#475569', fontSize: '11px', fontWeight: 700, borderRadius: '8px', padding: '2px 8px', border: '1px solid #e2e8f0' }}>{colTasks.length}</span>
+                    <span style={{ background: '#fff', color: '#475569', fontSize: '11px', fontWeight: 700, borderRadius: '8px', padding: '2px 8px', border: '1px solid #e2e8f0' }} className="admin-kanban-badge">{colTasks.length}</span>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }} className="hide-scroll">
@@ -829,6 +831,7 @@ export default function Workflow() {
                       colTasks.map((t) => (
                         <div 
                           key={t.id} 
+                          className="admin-kanban-card"
                           style={{
                             background: '#fff',
                             border: '1px solid #e2e8f0',
@@ -841,7 +844,7 @@ export default function Workflow() {
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>#{t.id}</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }} className="admin-kanban-id">#{t.id}</span>
                             <span style={{
                               background: t.priority === 'High' ? '#fef2f2' : t.priority === 'Medium' ? '#fff7ed' : '#f0fdf4',
                               color: t.priority === 'High' ? '#b91c1c' : t.priority === 'Medium' ? '#c2410c' : '#15803d',
@@ -852,7 +855,7 @@ export default function Workflow() {
                             }}>{t.priority}</span>
                           </div>
 
-                          <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', margin: 0, lineHeight: 1.4 }}>{t.title}</h4>
+                          <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', margin: 0, lineHeight: 1.4 }} className="admin-kanban-title">{t.title}</h4>
                           <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>Project: <span style={{ fontWeight: 600 }}>{t.project}</span></p>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
@@ -880,6 +883,7 @@ export default function Workflow() {
                                 const newStatus = e.target.value
                                 setTasks(prev => prev.map(item => item.id === t.id ? { ...item, status: newStatus } : item))
                               }}
+                              className="admin-kanban-select"
                               style={{
                                 border: '1px solid #cbd5e1',
                                 borderRadius: '4px',
@@ -1114,8 +1118,8 @@ export default function Workflow() {
                     setProjPriorityFilter('All Priority')
                   }}
                   style={{
-                    background: '#f1f5f9',
-                    color: '#475569',
+                    background: '#c0392b',
+                    color: '#fff',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '8px 16px',
@@ -1173,28 +1177,28 @@ export default function Workflow() {
                           <td style={{ padding: '14px 18px' }}>
                             <span style={{
                               background: 'rgba(192, 57, 43, 0.05)', color: '#c0392b',
-                              fontSize: '11px', fontWeight: 700, padding: '4px 8px', borderRadius: '6px'
+                              fontSize: '11px', fontWeight: 700, padding: '4px 8px', borderRadius: '6px', whiteSpace: 'nowrap'
                             }}>{p.code}</span>
                           </td>
                           <td style={{ padding: '14px 18px', fontSize: '13px', color: '#475569', fontWeight: 500 }}>{p.department}</td>
-                          <td style={{ padding: '14px 18px', fontSize: '13px', color: '#64748b', fontWeight: 500 }}>{p.start}</td>
-                          <td style={{ padding: '14px 18px', fontSize: '13px', color: '#64748b', fontWeight: 500 }}>{p.due}</td>
+                          <td style={{ padding: '14px 18px', fontSize: '13px', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap' }}>{p.start}</td>
+                          <td style={{ padding: '14px 18px', fontSize: '13px', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap' }}>{p.due}</td>
                           <td style={{ padding: '14px 18px' }}>
-                            <span style={{
+                            <span className="workflow-status-badge" style={{
                               background: statusStyle.bg, color: statusStyle.text,
-                              fontSize: '11px', fontWeight: 700, padding: '4px 8px', borderRadius: '6px'
+                              fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', whiteSpace: 'nowrap', display: 'inline-block'
                             }}>{p.status}</span>
                           </td>
                           <td style={{ padding: '14px 18px' }}>
-                            <span style={{
+                            <span className="workflow-priority-badge" style={{
                               background: priorityStyle.bg, color: priorityStyle.text,
-                              fontSize: '11px', fontWeight: 700, padding: '4px 8px', borderRadius: '6px'
+                              fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', whiteSpace: 'nowrap', display: 'inline-block'
                             }}>{p.priority}</span>
                           </td>
                           <td style={{ padding: '14px 18px' }}>
                             <div style={{ display: 'flex', alignItems: 'center' }}>
                               {p.members.slice(0, 3).map((m, idx) => (
-                                <div key={idx} style={{
+                                <div key={idx} className="workflow-member-avatar" style={{
                                   width: '24px', height: '24px', borderRadius: '50%',
                                   background: '#eff6ff', color: '#1d4ed8', fontSize: '9px', fontWeight: 700,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1202,7 +1206,7 @@ export default function Workflow() {
                                 }}>{m}</div>
                               ))}
                               {p.members.length > 3 && (
-                                <div style={{
+                                <div className="workflow-member-avatar" style={{
                                   width: '24px', height: '24px', borderRadius: '50%',
                                   background: '#f1f5f9', color: '#475569', fontSize: '9px', fontWeight: 700,
                                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1545,7 +1549,7 @@ export default function Workflow() {
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden'
-          }}>
+          }} className="workflow-chat-card">
             {/* Messages box */}
             <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {chatMessages.map((msg) => (
@@ -1554,14 +1558,17 @@ export default function Workflow() {
                     <span style={{ fontWeight: 700 }}>{msg.sender}</span>
                     <span>{msg.time}</span>
                   </div>
-                  <div style={{
-                    background: msg.sender === 'Super Admin' ? '#c0392b' : '#f1f5f9',
-                    color: msg.sender === 'Super Admin' ? '#fff' : '#1e293b',
-                    borderRadius: '8px',
-                    padding: '10px 14px',
-                    fontSize: '13px',
-                    lineHeight: 1.4
-                  }}>
+                  <div 
+                    className={msg.sender === 'Super Admin' ? 'workflow-chat-bubble-admin' : 'workflow-chat-bubble-user'}
+                    style={{
+                      background: msg.sender === 'Super Admin' ? '#c0392b' : '#f1f5f9',
+                      color: msg.sender === 'Super Admin' ? '#fff' : '#1e293b',
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      fontSize: '13px',
+                      lineHeight: 1.4
+                    }}
+                  >
                     {msg.message}
                   </div>
                 </div>
@@ -1569,11 +1576,12 @@ export default function Workflow() {
             </div>
 
             {/* Input message form */}
-            <form onSubmit={handleSendChatMessage} style={{ borderTop: '1px solid #e2e8f0', padding: '12px 16px', display: 'flex', gap: '10px' }}>
+            <form onSubmit={handleSendChatMessage} style={{ borderTop: '1px solid #e2e8f0', padding: '12px 16px', display: 'flex', gap: '10px' }} className="workflow-chat-form">
               <input
                 value={newMsgText}
                 onChange={(e) => setNewMsgText(e.target.value)}
                 placeholder="Type a team broadcast message..."
+                className="workflow-chat-input"
                 style={{
                   flex: 1,
                   background: '#f8fafc',

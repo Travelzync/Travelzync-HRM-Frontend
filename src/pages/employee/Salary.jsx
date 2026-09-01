@@ -68,12 +68,12 @@ export default function Salary() {
             justifyContent: 'center',
             color: '#c0392b',
             boxShadow: '0 2px 8px rgba(192, 57, 43, 0.08)'
-          }}>
+          }} className="payroll-wallet-icon">
             <Wallet size={24} />
           </div>
           <div>
             <p style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase', marginBottom: 6 }}>Current Month (August 2026) Net Salary</p>
-            <h2 style={{ fontSize: 26, fontWeight: 800, color: '#c0392b', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <h2 style={{ fontSize: 26, fontWeight: 800, color: '#c0392b', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }} className="payroll-net-val">
               ₹22,800
             </h2>
           </div>
@@ -195,7 +195,7 @@ export default function Salary() {
           gap: 20
         }}>
           {/* Allowances */}
-          <div style={{ background: '#f8fafc', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0' }}>
+          <div style={{ background: '#f8fafc', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0' }} className="salary-allowances-box">
             <span style={{ fontSize: 12, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 12 }}>Allowances</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {ALLOWANCES_LIST.map((allowance, index) => (
@@ -212,7 +212,7 @@ export default function Salary() {
           </div>
 
           {/* Deductions */}
-          <div style={{ background: '#fff5f5', borderRadius: 12, padding: 18, border: '1px solid #fde8e8' }}>
+          <div style={{ background: '#fff5f5', borderRadius: 12, padding: 18, border: '1px solid #fde8e8' }} className="salary-deductions-box">
             <span style={{ fontSize: 12, fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 12 }}>Deductions</span>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {DEDUCTIONS_LIST.map((deduction, index) => (
@@ -231,7 +231,7 @@ export default function Salary() {
           </div>
 
           {/* Key details */}
-          <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 18, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: 10 }} className="salary-details-box">
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, borderBottom: '1px solid #f1f5f9', paddingBottom: 6 }}>
               <span style={{ color: '#64748b' }}>Basic Salary</span>
               <span style={{ fontWeight: 700, color: '#1e293b' }}>₹18,000</span>
@@ -264,7 +264,7 @@ export default function Salary() {
         display: 'flex',
         alignItems: 'center',
         gap: 12
-      }}>
+      }} className="salary-remarks-banner">
         <Info size={18} color="#3b82f6" style={{ flexShrink: 0 }} />
         <span style={{ fontSize: 13, color: '#1e40af' }}>
           This is your salary structure and history. For any queries, please contact HR.
@@ -293,7 +293,7 @@ export default function Salary() {
             padding: 24,
             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
             position: 'relative'
-          }}>
+          }} className="salary-modal-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: 12, marginBottom: 16 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', margin: 0 }}>
                 Payout Breakdown - {selectedRecord.month} {selectedRecord.year}

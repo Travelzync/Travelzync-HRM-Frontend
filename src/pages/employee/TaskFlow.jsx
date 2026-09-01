@@ -310,7 +310,7 @@ export default function TaskFlow() {
   ]
 
   return (
-    <div style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column', flex: 1, height: isMobile ? 'auto' : '100%', minHeight: isMobile ? '100vh' : 'none' }}>
+    <div style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column', flex: 1, height: isMobile ? 'auto' : '100%', minHeight: isMobile ? '100vh' : 'none' }} className="taskflow-container">
       {/* Project Header Row */}
       <div style={{
         background: '#fff',
@@ -321,7 +321,7 @@ export default function TaskFlow() {
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: '16px'
-      }}>
+      }} className="taskflow-header">
         {/* Title and Badge controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Mobile Sidebar open button */}
@@ -498,7 +498,7 @@ export default function TaskFlow() {
         justifyContent: 'space-between',
         gap: '12px',
         borderBottom: '1px solid #e2e8f0'
-      }}>
+      }} className="taskflow-subnav">
         {/* Sub-navigation tabs list */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', overflowX: 'auto' }} className="hide-scroll">
           {['Overview', 'Tasks', 'Time Requests', 'Rejected Tasks', 'Chat'].map((tab) => {
@@ -535,7 +535,7 @@ export default function TaskFlow() {
             padding: '2px',
             borderRadius: '6px',
             gap: '2px'
-          }}>
+          }} className="taskflow-view-group">
             {[
               { id: 'Kanban', icon: Kanban },
               { id: 'Table', icon: Table },
@@ -581,7 +581,7 @@ export default function TaskFlow() {
             borderRadius: '6px',
             padding: '4px 10px',
             width: '180px'
-          }}>
+          }} className="taskflow-search-box">
             <Search size={12} color="#94a3b8" />
             <input
               value={taskSearchQuery}
@@ -618,6 +618,7 @@ export default function TaskFlow() {
               return (
                 <div 
                   key={col.key} 
+                  className="taskflow-column"
                   style={{
                     minWidth: isMobile ? '100%' : '270px',
                     width: isMobile ? '100%' : '270px',
@@ -651,15 +652,18 @@ export default function TaskFlow() {
                       </span>
                     </div>
                     {/* Badge count bubble */}
-                    <span style={{
-                      background: '#fff',
-                      color: '#475569',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      borderRadius: '8px',
-                      padding: '2px 6px',
-                      border: '1px solid #e2e8f0'
-                    }}>
+                    <span 
+                      className="taskflow-column-badge"
+                      style={{
+                        background: '#fff',
+                        color: '#475569',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        borderRadius: '8px',
+                        padding: '2px 6px',
+                        border: '1px solid #e2e8f0'
+                      }}
+                    >
                       {col.key === 'completed' && col.count > 0 ? `${columnTasks.length} / ${col.count}` : col.count}
                     </span>
                   </div>
@@ -675,6 +679,7 @@ export default function TaskFlow() {
                     {columnTasks.map((task) => (
                       <div
                         key={task.id}
+                        className="taskflow-task-card"
                         style={{
                           background: '#fff',
                           border: '1px solid #e2e8f0',
@@ -689,14 +694,17 @@ export default function TaskFlow() {
                         {/* Card Top Line */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{
-                              fontSize: '10px',
-                              fontWeight: 700,
-                              color: '#64748b',
-                              background: '#f1f5f9',
-                              padding: '2px 5px',
-                              borderRadius: '4px'
-                            }}>
+                            <span 
+                              className="taskflow-task-id"
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                color: '#64748b',
+                                background: '#f1f5f9',
+                                padding: '2px 5px',
+                                borderRadius: '4px'
+                              }}
+                            >
                               #{task.id}
                             </span>
                             <span style={{
@@ -727,13 +735,16 @@ export default function TaskFlow() {
                         </div>
 
                         {/* Title text */}
-                        <p style={{
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: '#1e293b',
-                          margin: 0,
-                          lineHeight: 1.4
-                        }}>
+                        <p 
+                          className="taskflow-task-title"
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#1e293b',
+                            margin: 0,
+                            lineHeight: 1.4
+                          }}
+                        >
                           {task.title}
                         </p>
 

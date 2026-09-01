@@ -222,7 +222,7 @@ export default function Notifications() {
         boxShadow: '0 4px 15px rgba(123, 36, 28, 0.15)',
         flexWrap: 'wrap',
         gap: '16px'
-      }}>
+      }} className="notif-hero-banner">
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Bell size={24} style={{ color: 'rgba(255,255,255,0.85)' }} />
@@ -402,16 +402,19 @@ export default function Notifications() {
             gap: '16px'
           }}>
             {/* Search Input Box */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '10px 14px',
-              gap: '10px'
-            }}>
-              <Search size={18} style={{ color: '#94a3b8' }} />
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                gap: '10px'
+              }}
+              className="notif-search-box"
+            >
+              <Search size={18} style={{ color: '#94a3b8', flexShrink: 0 }} />
               <input 
                 type="text"
                 value={searchQuery}
@@ -427,8 +430,11 @@ export default function Notifications() {
                   fontSize: '14px',
                   color: '#334155',
                   width: '100%',
-                  fontWeight: 500
+                  fontWeight: 500,
+                  boxShadow: 'none',
+                  padding: 0
                 }}
+                className="notif-search-input"
               />
               {searchQuery && (
                 <button 
@@ -468,18 +474,7 @@ export default function Notifications() {
                       whiteSpace: 'nowrap',
                       transition: 'all 0.15s'
                     }}
-                    onMouseOver={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = '#e2e8f0'
-                        e.currentTarget.style.color = '#334155'
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (!isActive) {
-                        e.currentTarget.style.background = '#f8fafc'
-                        e.currentTarget.style.color = '#64748b'
-                      }
-                    }}
+                    className={isActive ? 'notif-tab-active' : 'notif-tab-inactive'}
                   >
                     {tab}
                   </button>
@@ -511,6 +506,7 @@ export default function Notifications() {
                       position: 'relative',
                       opacity: notif.read ? 0.75 : 1
                     }}
+                    className={`notif-card ${notif.read ? 'notif-card-read' : ''}`}
                     onMouseOver={(e) => {
                       e.currentTarget.style.transform = 'translateY(-1px)'
                       e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.04)'
@@ -549,26 +545,35 @@ export default function Notifications() {
                         )}
                       </div>
 
-                      <h3 style={{
-                        fontSize: '14px',
-                        fontWeight: 700,
-                        color: notif.read ? '#64748b' : '#1e293b',
-                        marginTop: '8px',
-                        marginBottom: '4px'
-                      }}>
+                      <h3 
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 700,
+                          color: notif.read ? '#64748b' : '#1e293b',
+                          marginTop: '8px',
+                          marginBottom: '4px'
+                        }}
+                        className="notif-title"
+                      >
                         {notif.title}
                       </h3>
-                      <p style={{
-                        fontSize: '13px',
-                        color: notif.read ? '#94a3b8' : '#475569',
-                        lineHeight: 1.5,
-                        margin: 0
-                      }}>
+                      <p 
+                        style={{
+                          fontSize: '13px',
+                          color: notif.read ? '#94a3b8' : '#475569',
+                          lineHeight: 1.5,
+                          margin: 0
+                        }}
+                        className="notif-body"
+                      >
                         {notif.text}
                       </p>
                       
                       {/* Sender sign-off */}
-                      <span style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: notif.read ? '#94a3b8' : '#64748b', marginTop: '6px' }}>
+                      <span 
+                        style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: notif.read ? '#94a3b8' : '#64748b', marginTop: '6px' }}
+                        className="notif-sender"
+                      >
                         By {notif.sender}
                       </span>
                     </div>
@@ -782,17 +787,20 @@ export default function Notifications() {
               {notifications.slice(0, 4).map((notif) => (
                 <div key={notif.id} style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
                   {/* Circle dot on line */}
-                  <div style={{
-                    position: 'absolute',
-                    left: '-20px',
-                    top: '3px',
-                    width: '13px',
-                    height: '13px',
-                    borderRadius: '50%',
-                    background: notif.read ? '#cbd5e1' : '#c0392b',
-                    border: '3px solid #fff',
-                    boxShadow: '0 0 0 1px rgba(0,0,0,0.05)'
-                  }} />
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      left: '-20px',
+                      top: '3px',
+                      width: '13px',
+                      height: '13px',
+                      borderRadius: '50%',
+                      background: notif.read ? '#cbd5e1' : '#c0392b',
+                      border: '3px solid #fff',
+                      boxShadow: '0 0 0 1px rgba(0,0,0,0.05)'
+                    }}
+                    className="notif-timeline-dot"
+                  />
                   
                   <span style={{ fontSize: '12px', fontWeight: 700, color: '#334155' }}>
                     {notif.title}
@@ -838,6 +846,7 @@ export default function Notifications() {
                     flexDirection: 'column',
                     gap: '4px'
                   }}
+                  className="notif-important-card"
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#c0392b' }}>
                     <AlertTriangle size={12} />

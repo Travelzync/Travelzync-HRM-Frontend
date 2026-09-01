@@ -42,7 +42,7 @@ export default function Attendance() {
         justifyContent: 'space-between',
         gap: '20px',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
-      }}>
+      }} className="attendance-hero-banner">
         {/* User profile details */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           {/* Avatar frame */}
@@ -110,7 +110,7 @@ export default function Attendance() {
           {/* Today Status */}
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '10px', padding: '10px 16px', textAlign: 'center', minWidth: '95px' }}>
             <p style={{ fontSize: '9px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', margin: 0, fontWeight: 700 }}>Today Status</p>
-            <p style={{ fontSize: '14px', fontWeight: 700, margin: '4px 0 0 0', color: '#de4a4f' }}> Not Active</p>
+            <p style={{ fontSize: '14px', fontWeight: 700, margin: '4px 0 0 0', color: '#fca5a5' }}>Not Active</p>
           </div>
           {/* Working Hours */}
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '10px', padding: '10px 16px', textAlign: 'center', minWidth: '95px' }}>
@@ -248,12 +248,13 @@ export default function Attendance() {
                 borderRadius: '8px',
                 padding: '6px 12px',
                 width: '180px'
-              }}>
+              }} className="attendance-search-box">
                 <Search size={14} color="#94a3b8" />
                 <input 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search attendance..." 
+                  className="attendance-search-input"
                   style={{
                     border: 'none',
                     background: 'none',
@@ -409,7 +410,7 @@ export default function Attendance() {
             gap: '12px',
             position: 'relative',
             overflow: 'hidden'
-          }}>
+          }} className="attendance-score-banner">
             <h3 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', margin: 0, fontWeight: 700, letterSpacing: '0.05em' }}>Attendance Score</h3>
             
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>

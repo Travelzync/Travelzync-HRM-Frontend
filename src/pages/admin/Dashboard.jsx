@@ -55,7 +55,7 @@ function Card({ children, style = {} }) {
       border: '1px solid #f1f5f9',
       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       ...style,
-    }}>{children}</div>
+    }} className="admin-dashboard-card">{children}</div>
   )
 }
 
@@ -199,7 +199,7 @@ export default function Dashboard() {
                     <td style={{ fontSize: 13, color: '#6b7280', padding: '12px 0' }}>{dept}</td>
                     <td style={{ fontSize: 13, color: '#6b7280', padding: '12px 0' }}>{joined}</td>
                     <td style={{ padding: '12px 0' }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: statusStyle[status].color, background: statusStyle[status].bg, padding: '3px 8px', borderRadius: 6 }}>
+                      <span className="dashboard-status-badge" style={{ fontSize: 11, fontWeight: 600, color: statusStyle[status].color, background: statusStyle[status].bg, padding: '3px 8px', borderRadius: 6 }}>
                         {status}
                       </span>
                     </td>
@@ -223,16 +223,16 @@ export default function Dashboard() {
                   <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>{name.split(' ').map(n => n[0]).join('')}</span>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{name} <span style={{ fontWeight: 400, color: '#6b7280' }}>· {type}</span></p>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }} className="leave-item-name">{name} <span style={{ fontWeight: 400, color: '#6b7280' }}>· {type}</span></p>
                   <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{days} · {date}</p>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: statusStyle[status].color, background: statusStyle[status].bg, padding: '3px 8px', borderRadius: 6 }}>
+                <span className="dashboard-status-badge leave-status-badge" style={{ fontSize: 11, fontWeight: 600, color: statusStyle[status].color, background: statusStyle[status].bg, padding: '3px 8px', borderRadius: 6 }}>
                   {status}
                 </span>
                 {status === 'Pending' && (
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button style={{ padding: '4px 10px', background: '#f0fdf4', color: '#22c55e', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Approve</button>
-                    <button style={{ padding: '4px 10px', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Reject</button>
+                    <button className="leave-approve-btn" style={{ padding: '4px 10px', background: '#f0fdf4', color: '#22c55e', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Approve</button>
+                    <button className="leave-reject-btn" style={{ padding: '4px 10px', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Reject</button>
                   </div>
                 )}
               </div>

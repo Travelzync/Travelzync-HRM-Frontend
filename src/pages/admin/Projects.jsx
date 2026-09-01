@@ -317,8 +317,8 @@ export default function Projects() {
                 setPriorityFilter('All Priority')
               }}
               style={{
-                background: '#f1f5f9',
-                color: '#475569',
+                background: '#c0392b',
+                color: '#fff',
                 border: 'none',
                 borderRadius: '8px',
                 padding: '8px 16px',

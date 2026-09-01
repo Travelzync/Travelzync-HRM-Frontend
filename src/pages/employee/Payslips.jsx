@@ -127,7 +127,7 @@ export default function Payslips() {
             alignItems: 'center',
             justifyContent: 'center',
             color: '#c0392b'
-          }}>
+          }} className="payroll-calendar-icon">
             <Calendar size={22} />
           </div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -137,6 +137,7 @@ export default function Payslips() {
                 <select
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="payroll-month-select"
                   style={{
                     padding: '6px 36px 6px 12px',
                     borderRadius: 8,
@@ -159,7 +160,7 @@ export default function Payslips() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <label style={{ fontSize: 10, color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>Year</label>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#f8fafc' }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#1e293b', padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: 8, background: '#f8fafc' }} className="payroll-year-box">
                 2026
               </span>
             </div>
@@ -247,6 +248,7 @@ export default function Payslips() {
           ].map((item, index) => (
             <div
               key={index}
+              className={`payroll-summary-card ${item.label === 'Net Salary' ? 'payroll-net-card' : ''}`}
               style={{
                 padding: '12px 16px',
                 borderRadius: 12,
@@ -293,6 +295,7 @@ export default function Payslips() {
           ].map((item, index) => (
             <div
               key={index}
+              className="payroll-attendance-card"
               style={{
                 padding: '12px 14px',
                 borderRadius: 10,

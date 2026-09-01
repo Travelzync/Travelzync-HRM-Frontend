@@ -70,12 +70,12 @@ function ClockTimer() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 0' }}>
       <svg width={140} height={140} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={70} cy={70} r={r} fill="none" stroke="#f1f5f9" strokeWidth={10} />
+        <circle cx={70} cy={70} r={r} fill="none" stroke="#f1f5f9" strokeWidth={10} className="clock-track-circle" />
         <circle cx={70} cy={70} r={r} fill="none" stroke="#ef4444" strokeWidth={10}
           strokeDasharray={`${dash} ${circ}`} strokeLinecap="round" />
       </svg>
       <div style={{ marginTop: -100, textAlign: 'center', zIndex: 1, position: 'relative' }}>
-        <p style={{ fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: 1 }}>{h}:{m}:{s}</p>
+        <p style={{ fontSize: 22, fontWeight: 700, color: '#111827', letterSpacing: 1 }} className="clock-time-text">{h}:{m}:{s}</p>
         <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>Working Hours</p>
       </div>
       <div style={{ height: 60 }} />
@@ -102,7 +102,7 @@ function MiniChart() {
         </linearGradient>
       </defs>
       <polygon points={areaPoints} fill="url(#wg)" />
-      <polyline points={points} fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinejoin="round" />
+      <polyline points={points} fill="none" stroke="#ef4444" strokeWidth={2.5} strokeLinejoin="round" />
       {workHistory.map((d, i) => (
         <circle key={i} cx={30 + i * 60} cy={120 - (d.work / 100) * maxH} r={4} fill="#ef4444" />
       ))}
@@ -127,7 +127,7 @@ function DonutChart() {
     <div style={{ display: 'flex', alignItems: 'center', gap: 24 }} className="responsive-donut-chart">
       <div style={{ position: 'relative', flexShrink: 0 }}>
         <svg width={130} height={130} style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx={65} cy={65} r={r} fill="none" stroke="#f1f5f9" strokeWidth={14} />
+          <circle cx={65} cy={65} r={r} fill="none" stroke="#f1f5f9" strokeWidth={14} className="donut-track-circle" />
           <circle cx={65} cy={65} r={r} fill="none" stroke="#22c55e" strokeWidth={14}
             strokeDasharray={`${p1} ${circ}`} strokeDashoffset={-off1} />
           <circle cx={65} cy={65} r={r} fill="none" stroke="#ef4444" strokeWidth={14}
@@ -139,7 +139,7 @@ function DonutChart() {
           position: 'absolute', inset: 0, display: 'flex',
           flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         }}>
-          <p style={{ fontSize: 20, fontWeight: 700, color: '#111827' }}>81%</p>
+          <p style={{ fontSize: 20, fontWeight: 700, color: '#111827' }} className="donut-pct-text">81%</p>
           <p style={{ fontSize: 10, color: '#94a3b8' }}>Attendance</p>
         </div>
       </div>
@@ -152,7 +152,7 @@ function DonutChart() {
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }} />
             <span style={{ fontSize: 13, color: '#374151', minWidth: 50 }}>{label}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{val}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }} className="donut-val-text">{val}</span>
             <span style={{ fontSize: 12, color: '#94a3b8' }}>({pct})</span>
           </div>
         ))}
@@ -243,20 +243,20 @@ export default function Overview() {
           <Card style={{ padding: '18px 20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
               <div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Clock In / Out</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }} className="overview-clock-title">Clock In / Out</p>
                 <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>📅 Fri, 25 Aug 2026</p>
               </div>
-              <span style={{ fontSize: 11, color: '#94a3b8', background: '#f8fafc', padding: '3px 8px', borderRadius: 6 }}>● Inactive</span>
+              <span style={{ fontSize: 11, color: '#94a3b8', background: '#f8fafc', padding: '3px 8px', borderRadius: 6 }} className="overview-status-pill">● Inactive</span>
             </div>
             <ClockTimer />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
-              <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '10px 12px' }}>
-                <p style={{ fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>CLOCK IN</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>09:07 AM</p>
+              <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '10px 12px' }} className="overview-clockin-box">
+                <p style={{ fontSize: 10, color: '#16a34a', fontWeight: 700, marginBottom: 3 }} className="overview-clockin-label">CLOCK IN</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }} className="overview-clockin-val">09:07 AM</p>
               </div>
-              <div style={{ background: '#fef2f2', borderRadius: 8, padding: '10px 12px' }}>
-                <p style={{ fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>CLOCK OUT</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>06:13 PM</p>
+              <div style={{ background: '#fef2f2', borderRadius: 8, padding: '10px 12px' }} className="overview-clockout-box">
+                <p style={{ fontSize: 10, color: '#dc2626', fontWeight: 700, marginBottom: 3 }} className="overview-clockout-label">CLOCK OUT</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }} className="overview-clockout-val">06:13 PM</p>
               </div>
             </div>
           </Card>

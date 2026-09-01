@@ -224,8 +224,8 @@ export default function Departments() {
               setStatusFilter('All Status')
             }}
             style={{
-              background: '#f1f5f9',
-              color: '#475569',
+              background: '#c0392b',
+              color: '#fff',
               border: 'none',
               borderRadius: '8px',
               padding: '8px 16px',

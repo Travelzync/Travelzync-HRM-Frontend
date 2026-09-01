@@ -107,7 +107,7 @@ export default function Chat() {
       height: '100%',
       background: '#fff',
       flex: 1
-    }}>
+    }} className="chat-main-container">
       {/* A. Top Chat Header */}
       <div style={{
         padding: '16px 24px',
@@ -117,7 +117,7 @@ export default function Chat() {
         alignItems: 'center',
         background: '#fff',
         zIndex: 10
-      }}>
+      }} className="chat-top-header">
         <div>
           {/* Mobile hamburger menu toggle */}
           <button 
@@ -162,7 +162,7 @@ export default function Chat() {
         display: 'flex',
         flexDirection: 'column',
         gap: '20px'
-      }} className="hide-scroll">
+      }} className="chat-feed-area hide-scroll">
         
         {/* Render group of messages grouped by Date */}
         {(() => {
@@ -198,7 +198,7 @@ export default function Chat() {
                       color: '#94a3b8',
                       position: 'relative',
                       zIndex: 2
-                    }}>
+                    }} className="chat-date-pill">
                       {msg.date}
                     </span>
                   </div>
@@ -255,28 +255,31 @@ export default function Chat() {
 
                     {/* Text Bubble */}
                     {!msg.isAction && (
-                      <div style={{
-                        background: msg.isOutgoing 
-                          ? '#fee2e2' // Light pink-red bubble for your messages
-                          : msg.isHighlight 
-                            ? '#fff5f5' // Highlighted test comments
-                            : '#fff', // Standard white bubbles
-                        color: msg.isOutgoing 
-                          ? '#991b1b' 
-                          : msg.isHighlight 
-                            ? '#c0392b' 
-                            : '#1e293b',
-                        border: msg.isOutgoing
-                          ? '1px solid #fecaca'
-                          : msg.isHighlight
+                      <div 
+                        className={msg.isOutgoing ? 'chat-bubble-outgoing' : 'chat-bubble-incoming'}
+                        style={{
+                          background: msg.isOutgoing 
+                            ? '#fee2e2' // Light pink-red bubble for your messages
+                            : msg.isHighlight 
+                              ? '#fff5f5' // Highlighted test comments
+                              : '#fff', // Standard white bubbles
+                          color: msg.isOutgoing 
+                            ? '#991b1b' 
+                            : msg.isHighlight 
+                              ? '#c0392b' 
+                              : '#1e293b',
+                          border: msg.isOutgoing
                             ? '1px solid #fecaca'
-                            : '1px solid #e2e8f0',
-                        borderRadius: '12px',
-                        padding: '10px 14px',
-                        fontSize: '12px',
-                        lineHeight: 1.5,
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
-                      }}>
+                            : msg.isHighlight
+                              ? '1px solid #fecaca'
+                              : '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '10px 14px',
+                          fontSize: '12px',
+                          lineHeight: 1.5,
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.02)'
+                        }}
+                      >
                         {msg.text}
                       </div>
                     )}
@@ -300,6 +303,7 @@ export default function Chat() {
       {/* C. Bottom Message Input Bar */}
       <form 
         onSubmit={handleSendMessage}
+        className="chat-bottom-bar"
         style={{
           padding: '16px 24px',
           borderTop: '1px solid #e2e8f0',
@@ -324,20 +328,24 @@ export default function Chat() {
         </button>
 
         {/* Main Text Input */}
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '24px',
-          padding: '8px 16px',
-          gap: '8px'
-        }}>
+        <div 
+          className="chat-input-wrapper"
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '24px',
+            padding: '8px 16px',
+            gap: '8px'
+          }}
+        >
           <input 
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             placeholder={chatMeta.placeholder}
+            className="chat-input-field"
             style={{
               border: 'none',
               background: 'none',
@@ -353,6 +361,7 @@ export default function Chat() {
         {/* Submit Send Button */}
         <button 
           type="submit"
+          className="chat-send-btn"
           style={{
             background: '#c0392b',
             color: '#fff',

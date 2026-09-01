@@ -88,7 +88,7 @@ export default function WorkFromHome() {
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '16px'
-      }}>
+      }} className="wfh-hero-banner">
         <div>
           <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>Work From Home</h2>
           <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', margin: '2px 0 0 0' }}>Manage and track your remote work requests</p>
@@ -118,7 +118,7 @@ export default function WorkFromHome() {
       }}>
         {/* Total requests card */}
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#7b241c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#7b241c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }} className="wfh-icon-box">
             <Home size={16} />
           </div>
           <div>
@@ -129,7 +129,7 @@ export default function WorkFromHome() {
 
         {/* Approved card */}
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#7b241c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#7b241c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }} className="wfh-icon-box">
             <Calendar size={16} />
           </div>
           <div>
@@ -140,7 +140,7 @@ export default function WorkFromHome() {
 
         {/* Pending card */}
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#7b241c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#7b241c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }} className="wfh-icon-box">
             <AlertCircle size={16} />
           </div>
           <div>
@@ -151,7 +151,7 @@ export default function WorkFromHome() {
 
         {/* Rejected card */}
         <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#7b241c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+          <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#7b241c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }} className="wfh-icon-box">
             <X size={16} />
           </div>
           <div>
@@ -168,7 +168,7 @@ export default function WorkFromHome() {
         borderRadius: '8px',
         overflow: 'hidden'
       }}>
-        <div style={{ background: '#7b241c', padding: '10px 16px', color: '#fff' }}>
+        <div style={{ background: '#7b241c', padding: '10px 16px', color: '#fff' }} className="wfh-panel-header">
           <h3 style={{ fontSize: '13px', fontWeight: 600, margin: 0 }}>Quick Actions</h3>
         </div>
         <div style={{ padding: '16px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
@@ -249,7 +249,7 @@ export default function WorkFromHome() {
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '8px'
-        }}>
+        }} className="wfh-table-header">
           <div>
             <h3 style={{ fontSize: '13px', fontWeight: 600, margin: 0 }}>Request History</h3>
             <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', margin: '2px 0 0 0' }}>Your work from home requests and their status</p>
@@ -277,6 +277,7 @@ export default function WorkFromHome() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
+              className="wfh-select-filter"
               style={{
                 background: '#7b241c',
                 color: '#fff',

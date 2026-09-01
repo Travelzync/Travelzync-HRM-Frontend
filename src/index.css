@@ -306,7 +306,7 @@ html.dark textarea::placeholder {
   color: #64748b !important;
 }
 
-/* ── Typography Overrides ── */
+/* ── Typography & Number Overrides (Hex + RGB) ── */
 html.dark h1,
 html.dark h2,
 html.dark h3,
@@ -318,10 +318,19 @@ html.dark h6 {
 
 html.dark [style*="color: #111827"],
 html.dark [style*="color:#111827"],
+html.dark [style*="color: rgb(17, 24, 39)"],
+html.dark [style*="color:rgb(17, 24, 39)"],
+html.dark [style*="color:rgb(17,24,39)"],
 html.dark [style*="color: #0f172a"],
 html.dark [style*="color:#0f172a"],
-html.dark [style*="color: #1e293b"],
-html.dark [style*="color:#1e293b"],
+html.dark [style*="color: rgb(15, 23, 42)"],
+html.dark [style*="color:rgb(15, 23, 42)"],
+html.dark [style*="color:rgb(15,23,42)"],
+html.dark [style*="color: #1e293b"]:not(aside *),
+html.dark [style*="color:#1e293b"]:not(aside *),
+html.dark [style*="color: rgb(30, 41, 59)"]:not(aside *),
+html.dark [style*="color:rgb(30, 41, 59)"]:not(aside *),
+html.dark [style*="color:rgb(30,41,59)"]:not(aside *),
 html.dark .text-gray-900,
 html.dark .text-gray-800 {
   color: #f8fafc !important;
@@ -329,8 +338,24 @@ html.dark .text-gray-800 {
 
 html.dark [style*="color: #374151"],
 html.dark [style*="color:#374151"],
+html.dark [style*="color: rgb(55, 65, 81)"],
+html.dark [style*="color:rgb(55, 65, 81)"],
+html.dark [style*="color:rgb(55,65,81)"],
 html.dark [style*="color: #4b5563"],
 html.dark [style*="color:#4b5563"],
+html.dark [style*="color: rgb(75, 85, 99)"],
+html.dark [style*="color:rgb(75, 85, 99)"],
+html.dark [style*="color:rgb(75,85,99)"],
+html.dark [style*="color: #475569"],
+html.dark [style*="color:#475569"],
+html.dark [style*="color: rgb(71, 85, 105)"],
+html.dark [style*="color:rgb(71, 85, 105)"],
+html.dark [style*="color:rgb(71,85,105)"],
+html.dark [style*="color: #334155"],
+html.dark [style*="color:#334155"],
+html.dark [style*="color: rgb(51, 65, 85)"],
+html.dark [style*="color:rgb(51, 65, 85)"],
+html.dark [style*="color:rgb(51,65,85)"],
 html.dark .text-gray-700,
 html.dark .text-gray-600 {
   color: #cbd5e1 !important;
@@ -338,15 +363,61 @@ html.dark .text-gray-600 {
 
 html.dark [style*="color: #64748b"],
 html.dark [style*="color:#64748b"],
+html.dark [style*="color: rgb(100, 116, 139)"],
+html.dark [style*="color:rgb(100, 116, 139)"],
+html.dark [style*="color:rgb(100,116,139)"],
 html.dark [style*="color: #6b7280"],
 html.dark [style*="color:#6b7280"],
+html.dark [style*="color: rgb(107, 114, 128)"],
+html.dark [style*="color:rgb(107, 114, 128)"],
 html.dark [style*="color: #94a3b8"],
 html.dark [style*="color:#94a3b8"],
+html.dark [style*="color: rgb(148, 163, 184)"],
+html.dark [style*="color:rgb(148, 163, 184)"],
 html.dark [style*="color: #9ca3af"],
 html.dark [style*="color:#9ca3af"],
+html.dark [style*="color: rgb(156, 163, 175)"],
+html.dark [style*="color:rgb(156, 163, 175)"],
 html.dark .text-gray-500,
 html.dark .text-gray-400 {
   color: #94a3b8 !important;
+}
+
+/* ── SVG Clock & Donut Charts Dark Mode ── */
+html.dark svg circle[stroke="#f1f5f9"],
+html.dark svg circle[stroke="rgb(241, 245, 249)"],
+html.dark svg circle[stroke="rgb(241,245,249)"],
+html.dark .clock-track-circle,
+html.dark .donut-track-circle {
+  stroke: #1e293b !important;
+}
+
+html.dark .clock-time-text,
+html.dark .donut-pct-text,
+html.dark .donut-val-text {
+  color: #f8fafc !important;
+}
+
+/* ── Quick Action Buttons in Overview & Cards ── */
+html.dark main button[style*="background: #fff"],
+html.dark main button[style*="background:#fff"],
+html.dark main button[style*="background: rgb(255, 255, 255)"],
+html.dark main button[style*="background: white"] {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark main button[style*="background: #fff"]:hover,
+html.dark main button[style*="background:#fff"]:hover,
+html.dark main button[style*="background: rgb(255, 255, 255)"]:hover {
+  background-color: #1e293b !important;
+}
+
+html.dark main button[style*="background: #fff"] span,
+html.dark main button[style*="background:#fff"] span,
+html.dark main button[style*="background: rgb(255, 255, 255)"] span {
+  color: #cbd5e1 !important;
 }
 
 /* ── Tables & Data Grids ── */
@@ -362,14 +433,40 @@ html.dark th {
   border-color: #1e293b !important;
 }
 
-html.dark td,
-html.dark tr {
+html.dark tbody tr,
+html.dark tbody tr[style*="background: #fff"],
+html.dark tbody tr[style*="background:#fff"],
+html.dark tbody tr[style*="background: #fff5f5"],
+html.dark tbody tr[style*="background:#fff5f5"],
+html.dark tbody tr[style*="background: #fafafa"],
+html.dark tbody tr[style*="background:#fafafa"] {
+  background-color: transparent !important;
   border-color: #1e293b !important;
-  color: #e2e8f0 !important;
+}
+
+html.dark tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02) !important;
 }
 
 html.dark tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.02) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+html.dark table td,
+html.dark td {
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+/* Date columns and bold text inside tables */
+html.dark table tbody td:first-child,
+html.dark table tbody td[style*="font-weight: 600"],
+html.dark table tbody td[style*="fontWeight: 600"],
+html.dark table tbody td[style*="font-weight: 700"],
+html.dark table tbody td[style*="fontWeight: 700"],
+html.dark table td strong,
+html.dark table td b {
+  color: #f8fafc !important;
 }
 
 /* ── General Borders & Dividers ── */
@@ -436,6 +533,871 @@ html.dark .login-remember {
 html.dark .login-footer {
   color: #64748b !important;
 }
+
+/* ── Notifications Dark Mode ── */
+html.dark .notif-search-box {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark input.notif-search-input {
+  background-color: transparent !important;
+  border: none !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+html.dark input.notif-search-input:focus {
+  border: none !important;
+  outline: none !important;
+}
+
+html.dark input.notif-search-input::placeholder {
+  color: #64748b !important;
+}
+
+html.dark .notif-tab-inactive {
+  background-color: #090d16 !important;
+  color: #94a3b8 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .notif-tab-inactive:hover {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .notif-tab-active {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* Notification Message Cards */
+html.dark .notif-card {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .notif-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .notif-title {
+  color: #f8fafc !important;
+}
+
+html.dark .notif-body {
+  color: #cbd5e1 !important;
+}
+
+html.dark .notif-card-read {
+  opacity: 0.65 !important;
+}
+
+html.dark .notif-card-read .notif-title {
+  color: #94a3b8 !important;
+}
+
+html.dark .notif-card-read .notif-body {
+  color: #64748b !important;
+}
+html.dark main button[style*="background: #fff"]:hover,
+html.dark main button[style*="background:#fff"]:hover,
+html.dark main button[style*="background: rgb(255, 255, 255)"]:hover {
+  background-color: #1e293b !important;
+}
+
+html.dark main button[style*="background: #fff"] span,
+html.dark main button[style*="background:#fff"] span,
+html.dark main button[style*="background: rgb(255, 255, 255)"] span {
+  color: #cbd5e1 !important;
+}
+
+/* ── Tables & Data Grids ── */
+html.dark table {
+  border-color: #1e293b !important;
+}
+
+html.dark thead,
+html.dark thead tr,
+html.dark thead th,
+html.dark th,
+html.dark tr[style*="background: #c0392b"],
+html.dark tr[style*="background:#c0392b"],
+html.dark tr[style*="background: rgb(192, 57, 43)"],
+html.dark th[style*="background: #c0392b"],
+html.dark th[style*="background:#c0392b"] {
+  background: #090d16 !important;
+  background-color: #090d16 !important;
+  color: #94a3b8 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark tbody tr,
+html.dark tbody tr[style*="background: #fff"],
+html.dark tbody tr[style*="background:#fff"],
+html.dark tbody tr[style*="background: #fff5f5"],
+html.dark tbody tr[style*="background:#fff5f5"],
+html.dark tbody tr[style*="background: #fafafa"],
+html.dark tbody tr[style*="background:#fafafa"] {
+  background-color: transparent !important;
+  border-color: #1e293b !important;
+}
+
+html.dark tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+html.dark tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+html.dark table td,
+html.dark td {
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+/* Date columns and bold text inside tables */
+html.dark table tbody td:first-child,
+html.dark table tbody td[style*="font-weight: 600"],
+html.dark table tbody td[style*="fontWeight: 600"],
+html.dark table tbody td[style*="font-weight: 700"],
+html.dark table tbody td[style*="fontWeight: 700"],
+html.dark table td strong,
+html.dark table td b {
+  color: #f8fafc !important;
+}
+
+/* ── General Borders & Dividers ── */
+html.dark [style*="border: 1px solid #f1f5f9"],
+html.dark [style*="border: 1px solid #e2e8f0"],
+html.dark [style*="border-bottom: 1px solid #f1f5f9"],
+html.dark [style*="border-bottom: 1px solid #e2e8f0"],
+html.dark [style*="border-top: 1px solid #f1f5f9"],
+html.dark [style*="border-top: 1px solid #e2e8f0"],
+html.dark [style*="border: 1px solid #e5e7eb"],
+html.dark [style*="border-color: #e2e8f0"],
+html.dark [style*="border-color: #f1f5f9"],
+html.dark .border-gray-100,
+html.dark .border-gray-200 {
+  border-color: #1e293b !important;
+}
+
+/* ── Stat Card Pastel Tints ── */
+html.dark [style*="background: #eff6ff"], html.dark [style*="background:#eff6ff"] { background: rgba(59, 130, 246, 0.15) !important; }
+html.dark [style*="background: #f0fdf4"], html.dark [style*="background:#f0fdf4"] { background: rgba(34, 197, 94, 0.15) !important; }
+html.dark [style*="background: #fff7ed"], html.dark [style*="background:#fff7ed"] { background: rgba(249, 115, 22, 0.15) !important; }
+html.dark [style*="background: #fef2f2"], html.dark [style*="background:#fef2f2"] { background: rgba(239, 68, 68, 0.15) !important; }
+html.dark [style*="background: #f5f3ff"], html.dark [style*="background:#f5f3ff"] { background: rgba(139, 92, 246, 0.15) !important; }
+html.dark [style*="background: #fdf2f8"], html.dark [style*="background:#fdf2f8"] { background: rgba(236, 72, 153, 0.15) !important; }
+html.dark [style*="background: #fefce8"], html.dark [style*="background:#fefce8"] { background: rgba(234, 179, 8, 0.15) !important; }
+
+/* ── Login Page Dark Mode ── */
+html.dark .login-right-panel {
+  background-color: #090d16 !important;
+}
+
+html.dark .login-card {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .login-title {
+  color: #f8fafc !important;
+}
+
+html.dark .login-subtitle {
+  color: #94a3b8 !important;
+}
+
+html.dark .login-label {
+  color: #cbd5e1 !important;
+}
+
+html.dark .login-input {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .login-input:focus {
+  border-color: #ef4444 !important;
+}
+
+html.dark .login-remember {
+  color: #94a3b8 !important;
+}
+
+html.dark .login-footer {
+  color: #64748b !important;
+}
+
+/* ── Notifications Dark Mode ── */
+html.dark .notif-search-box {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark input.notif-search-input {
+  background-color: transparent !important;
+  border: none !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+html.dark input.notif-search-input:focus {
+  border: none !important;
+  outline: none !important;
+}
+
+html.dark input.notif-search-input::placeholder {
+  color: #64748b !important;
+}
+
+html.dark .notif-tab-inactive {
+  background-color: #090d16 !important;
+  color: #94a3b8 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .notif-tab-inactive:hover {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .notif-tab-active {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* Notification Message Cards */
+html.dark .notif-card {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .notif-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .notif-title {
+  color: #f8fafc !important;
+}
+
+html.dark .notif-body {
+  color: #cbd5e1 !important;
+}
+
+html.dark .notif-card-read {
+  opacity: 0.65 !important;
+}
+
+html.dark .notif-card-read .notif-title {
+  color: #94a3b8 !important;
+}
+
+html.dark .notif-card-read .notif-body {
+  color: #64748b !important;
+}
+
+html.dark .notif-sender {
+  color: #94a3b8 !important;
+}
+
+html.dark .notif-important-card {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .notif-important-card p {
+  color: #cbd5e1 !important;
+}
+
+html.dark .notif-timeline-dot {
+  border-color: #131b2e !important;
+}
+
+/* ── Overview Clock In / Out Boxes ── */
+html.dark .overview-clock-title {
+  color: #f8fafc !important;
+}
+
+html.dark .overview-status-pill {
+  background-color: #090d16 !important;
+  color: #94a3b8 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .overview-clockin-box {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border: 1px solid rgba(34, 197, 94, 0.25) !important;
+}
+
+html.dark .overview-clockin-label {
+  color: #4ade80 !important;
+}
+
+html.dark .overview-clockin-val {
+  color: #f8fafc !important;
+}
+
+html.dark .overview-clockout-box {
+  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.25) !important;
+}
+
+html.dark .overview-clockout-label {
+  color: #f87171 !important;
+}
+
+html.dark .overview-clockout-val {
+  color: #f8fafc !important;
+}
+
+/* ── Hero, Profile & Banner Modules in Dark Mode ── */
+html.dark .responsive-hero-banner,
+html.dark .attendance-hero-banner,
+html.dark .attendance-score-banner,
+html.dark .notif-hero-banner,
+html.dark .wfh-hero-banner,
+html.dark .wfh-panel-header,
+html.dark .wfh-table-header {
+  background: linear-gradient(135deg, #131b2e 0%, #0d1322 100%) !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .responsive-hero-banner *,
+html.dark .attendance-hero-banner *,
+html.dark .attendance-score-banner *,
+html.dark .notif-hero-banner *,
+html.dark .wfh-hero-banner *,
+html.dark .wfh-panel-header *,
+html.dark .wfh-table-header * {
+  color: #f8fafc !important;
+}
+
+html.dark .responsive-hero-banner button,
+html.dark .attendance-hero-banner button,
+html.dark .notif-hero-banner button,
+html.dark .wfh-hero-banner button {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+}
+
+/* ── Work From Home Dark Mode ── */
+html.dark .wfh-icon-box {
+  background: #1e293b !important;
+  color: #ef4444 !important;
+}
+
+html.dark .wfh-select-filter {
+  background: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* ── Chat Module Dark Mode ── */
+html.dark .chat-main-container {
+  background-color: #090d16 !important;
+}
+
+html.dark .chat-top-header {
+  background-color: #0d1322 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .chat-top-header h2 {
+  color: #f8fafc !important;
+}
+
+html.dark .chat-feed-area {
+  background-color: #090d16 !important;
+}
+
+html.dark .chat-date-pill {
+  background-color: #131b2e !important;
+  color: #94a3b8 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .chat-bubble-incoming {
+  background-color: #131b2e !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .chat-bubble-outgoing {
+  background-color: #ef4444 !important;
+  border: 1px solid #ef4444 !important;
+  color: #ffffff !important;
+}
+
+html.dark .chat-bottom-bar {
+  background-color: #0d1322 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .chat-input-wrapper {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .chat-input-field {
+  color: #f8fafc !important;
+}
+
+html.dark .chat-send-btn {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* ── Payroll & Payslips Dark Mode ── */
+html.dark .payroll-calendar-icon,
+html.dark .payroll-wallet-icon {
+  background: #1e293b !important;
+  color: #ef4444 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .payroll-month-select {
+  background-color: #090d16 !important;
+  border-color: #ef4444 !important;
+  color: #f8fafc !important;
+}
+
+html.dark .payroll-year-box {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .payroll-summary-card {
+  background-color: #090d16 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .payroll-summary-card span:first-child {
+  color: #94a3b8 !important;
+}
+
+html.dark .payroll-summary-card span:last-child {
+  color: #f8fafc !important;
+}
+
+html.dark .payroll-summary-card.payroll-net-card {
+  background-color: rgba(34, 197, 94, 0.12) !important;
+  border: 1px solid rgba(34, 197, 94, 0.3) !important;
+}
+
+html.dark .payroll-summary-card.payroll-net-card span:last-child {
+  color: #4ade80 !important;
+}
+
+html.dark .payroll-attendance-card {
+  background-color: #090d16 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .payroll-attendance-card span:first-child {
+  color: #94a3b8 !important;
+}
+
+html.dark .payroll-attendance-card span:last-child {
+  color: #f8fafc !important;
+}
+
+html.dark .payroll-net-val {
+  color: #4ade80 !important;
+}
+
+/* ── Salary Structure 3 Column Boxes (Allowances, Deductions, Details) ── */
+html.dark .salary-allowances-box,
+html.dark .salary-deductions-box,
+html.dark .salary-details-box,
+html.dark main div.salary-allowances-box,
+html.dark main div.salary-deductions-box,
+html.dark main div.salary-details-box {
+  background-color: #0d1322 !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 12px !important;
+}
+
+html.dark .salary-allowances-box span[style*="color: #15803d"],
+html.dark .salary-allowances-box span[style*="color:#15803d"] {
+  color: #4ade80 !important;
+}
+
+html.dark .salary-deductions-box span[style*="color: #c0392b"],
+html.dark .salary-deductions-box span[style*="color:#c0392b"] {
+  color: #f87171 !important;
+}
+
+html.dark .salary-allowances-box div,
+html.dark .salary-deductions-box div,
+html.dark .salary-details-box div {
+  border-color: #1e293b !important;
+}
+
+
+html.dark .salary-remarks-banner {
+  background-color: #0d1322 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .salary-remarks-banner span {
+  color: #93c5fd !important;
+}
+
+html.dark .salary-modal-card {
+  background-color: #131b2e !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .salary-modal-card h3 {
+  color: #f8fafc !important;
+}
+
+html.dark .salary-modal-card div[style*="border-bottom"],
+html.dark .salary-modal-card div[style*="border-top"] {
+  border-color: #1e293b !important;
+}
+
+html.dark [style*="color: #2e7d32"],
+html.dark [style*="color:#2e7d32"] {
+  color: #4ade80 !important;
+}
+
+html.dark [style*="color: #c0392b"]:not(button):not(aside *) {
+  color: #f87171 !important;
+}
+
+
+
+/* ── TaskFlow & Workflow Dark Mode ── */
+html.dark .taskflow-container {
+  background-color: #090d16 !important;
+}
+
+html.dark .taskflow-header {
+  background-color: #0d1322 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .taskflow-subnav {
+  background-color: #0d1322 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .taskflow-view-group {
+  background-color: #131b2e !important;
+}
+
+html.dark .taskflow-search-box {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .taskflow-search-box input {
+  color: #f8fafc !important;
+}
+
+html.dark .taskflow-column {
+  background-color: #0b0f19 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .taskflow-column-badge {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .taskflow-task-card {
+  background-color: #131b2e !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .taskflow-task-id {
+  background-color: #090d16 !important;
+  color: #94a3b8 !important;
+}
+
+html.dark .taskflow-task-title {
+  color: #f8fafc !important;
+}
+
+/* ── Universal Search Containers Across ALL Modules ── */
+html.dark .responsive-header-search,
+html.dark .notif-search-box,
+html.dark .attendance-search-box,
+html.dark .taskflow-search-box,
+html.dark div:has(> input[placeholder*="Search"]),
+html.dark div:has(> input[placeholder*="search"]),
+html.dark div:has(> input[placeholder*="Search..."]),
+html.dark div:has(> input[placeholder*="Search anything..."]),
+html.dark div:has(> input[placeholder*="Search by"]),
+html.dark div:has(> svg + input),
+html.dark div:has(> input[style*="border: none"]),
+html.dark div:has(> input[style*="border:none"]) {
+  background-color: #090d16 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark input[placeholder*="Search"],
+html.dark input[placeholder*="search"],
+html.dark input[placeholder*="Search..."],
+html.dark input[placeholder*="Search anything..."],
+html.dark input[placeholder*="Search by"],
+html.dark input.attendance-search-input,
+html.dark .responsive-header-search input,
+html.dark .notif-search-box input,
+html.dark .attendance-search-box input,
+html.dark .taskflow-search-box input,
+html.dark div > input[style*="border: none"],
+html.dark div > input[style*="border:none"] {
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: #f8fafc !important;
+}
+
+html.dark input[placeholder*="Search"]::placeholder,
+html.dark input[placeholder*="search"]::placeholder,
+html.dark input[placeholder*="Search..."]::placeholder,
+html.dark input[placeholder*="Search anything..."]::placeholder,
+html.dark input[placeholder*="Search by"]::placeholder,
+html.dark .responsive-header-search input::placeholder,
+html.dark input.attendance-search-input::placeholder {
+  color: #64748b !important;
+}
+
+/* ── Admin Workflow & Layout Dark Mode ── */
+html.dark .admin-workflow-container {
+  background-color: #090d16 !important;
+}
+
+html.dark .admin-workflow-header {
+  background-color: #0d1322 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark header,
+html.dark .responsive-header {
+  background-color: #0d1322 !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+html.dark .responsive-header-greeting {
+  color: #f8fafc !important;
+}
+
+/* ── Admin Workflow Chat Panel Dark Mode ── */
+html.dark .workflow-chat-card {
+  background-color: #0d1322 !important;
+  border-color: #1e293b !important;
+}
+
+html.dark .workflow-chat-bubble-user {
+  background-color: #131b2e !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .workflow-chat-bubble-admin {
+  background-color: #ef4444 !important;
+  border: 1px solid #ef4444 !important;
+  color: #ffffff !important;
+}
+
+html.dark .workflow-chat-form {
+  border-color: #1e293b !important;
+  background-color: #0d1322 !important;
+}
+
+html.dark .workflow-chat-input {
+  background-color: #090d16 !important;
+  border-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* ── Admin Workflow Kanban Board Dark Mode ── */
+html.dark .admin-kanban-col {
+  background-color: #0b0f19 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .admin-kanban-badge {
+  background-color: #131b2e !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+html.dark .admin-kanban-card {
+  background-color: #131b2e !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .admin-kanban-id {
+  background-color: #090d16 !important;
+  color: #94a3b8 !important;
+}
+
+html.dark .admin-kanban-title {
+  color: #f8fafc !important;
+}
+
+html.dark .admin-kanban-select {
+  background-color: #090d16 !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* ── Workflow Badges, Avatars & Actions Dark Mode ── */
+html.dark .workflow-member-avatar {
+  background-color: #1e293b !important;
+  color: #60a5fa !important;
+  border-color: #0d1322 !important;
+}
+
+html.dark .workflow-status-badge,
+html.dark .workflow-priority-badge {
+  border: 1px solid transparent !important;
+}
+
+/* Active & Completed badges */
+html.dark span.workflow-status-badge[style*="background: rgb(240, 253, 244)"],
+html.dark span.workflow-status-badge[style*="background: #f0fdf4"],
+html.dark span.workflow-status-badge[style*="background:#f0fdf4"] {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+/* Urgent / High badges */
+html.dark span.workflow-priority-badge[style*="background: rgb(254, 242, 242)"],
+html.dark span.workflow-priority-badge[style*="background: #fef2f2"],
+html.dark span.workflow-priority-badge[style*="background:#fef2f2"],
+html.dark span.workflow-priority-badge[style*="background: rgb(255, 247, 237)"],
+html.dark span.workflow-priority-badge[style*="background: #fff7ed"],
+html.dark span.workflow-priority-badge[style*="background:#fff7ed"] {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+  color: #fb923c !important;
+  border-color: rgba(249, 115, 22, 0.3) !important;
+}
+
+/* In Progress / Medium badges */
+html.dark span.workflow-status-badge[style*="background: rgb(255, 253, 235)"],
+html.dark span.workflow-status-badge[style*="background: #fffdeb"],
+html.dark span.workflow-status-badge[style*="background:#fffdeb"],
+html.dark span.workflow-priority-badge[style*="background: rgb(255, 253, 235)"],
+html.dark span.workflow-priority-badge[style*="background: #fffdeb"],
+html.dark span.workflow-priority-badge[style*="background:#fffdeb"] {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+  color: #facc15 !important;
+  border-color: rgba(234, 179, 8, 0.3) !important;
+}
+
+/* On Hold */
+html.dark span.workflow-status-badge[style*="background: rgb(239, 246, 255)"],
+html.dark span.workflow-status-badge[style*="background: #eff6ff"],
+html.dark span.workflow-status-badge[style*="background:#eff6ff"] {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  color: #60a5fa !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Table action buttons in dark mode */
+html.dark table tbody td button {
+  color: #94a3b8 !important;
+}
+
+html.dark table tbody td button:hover {
+  color: #f8fafc !important;
+}
+
+/* ── Admin Dashboard Dark Mode ── */
+html.dark .admin-dashboard-card {
+  background-color: #0d1322 !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .responsive-leave-item {
+  background-color: #090d16 !important;
+  border: 1px solid #1e293b !important;
+}
+
+html.dark .responsive-leave-item .leave-item-name {
+  color: #f8fafc !important;
+}
+
+html.dark .responsive-leave-item .leave-item-name span {
+  color: #94a3b8 !important;
+}
+
+html.dark .leave-approve-btn {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(34, 197, 94, 0.3) !important;
+}
+
+html.dark .leave-reject-btn {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+/* ── Dashboard Status Badges Dark Mode ── */
+html.dark .dashboard-status-badge,
+html.dark span.dashboard-status-badge {
+  border: 1px solid transparent !important;
+}
+
+html.dark span.dashboard-status-badge[style*="color: rgb(34, 197, 94)"],
+html.dark span.dashboard-status-badge[style*="color: #22c55e"],
+html.dark span.dashboard-status-badge[style*="color:#22c55e"] {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  border-color: rgba(34, 197, 94, 0.3) !important;
+}
+
+html.dark span.dashboard-status-badge[style*="color: rgb(249, 115, 22)"],
+html.dark span.dashboard-status-badge[style*="color: #f97316"],
+html.dark span.dashboard-status-badge[style*="color:#f97316"] {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+  color: #fb923c !important;
+  border-color: rgba(249, 115, 22, 0.3) !important;
+}
+
+html.dark span.dashboard-status-badge[style*="color: rgb(234, 179, 8)"],
+html.dark span.dashboard-status-badge[style*="color: #eab308"],
+html.dark span.dashboard-status-badge[style*="color:#eab308"] {
+  background-color: rgba(234, 179, 8, 0.15) !important;
+  color: #facc15 !important;
+  border-color: rgba(234, 179, 8, 0.3) !important;
+}
+
+html.dark span.dashboard-status-badge[style*="color: rgb(239, 68, 68)"],
+html.dark span.dashboard-status-badge[style*="color: #ef4444"],
+html.dark span.dashboard-status-badge[style*="color:#ef4444"] {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+
+
+
+
 
 
 
