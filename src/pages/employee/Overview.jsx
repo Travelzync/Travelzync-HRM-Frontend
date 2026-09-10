@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import { CheckSquare, Workflow, FileText, BarChart2, CalendarDays, ClipboardList, Plus, CheckCircle2, Circle } from 'lucide-react'
+import { CheckSquare, Workflow, FileText, BarChart2, CalendarDays, ClipboardList, Plus, CheckCircle2, Circle, Coffee, Play, Square } from 'lucide-react'
+import { getCurrentUser } from '../../services/authService'
+import { getTodayAttendance } from '../../services/attendanceService'
 
 const statCards = [
   { label: 'Total Working Days', value: '22', sub: 'This Month', color: '#ef4444', bg: '#fef2f2', icon: '📅' },
@@ -19,14 +21,14 @@ const notifications = [
   { icon: '✅', title: 'Leave Approved', time: '2h ago', color: '#22c55e', bg: '#f0fdf4' },
   { icon: '📄', title: 'Payslip Available', time: '5h ago', color: '#8b5cf6', bg: '#f5f3ff' },
   { icon: '📅', title: 'Upcoming Holiday', time: '1d ago', color: '#f97316', bg: '#fff7ed' },
-  { icon: '👥', title: 'Team Meeting', time: '1d ago', color: '#3b82f6', bg: '#eff6ff' },
+  { icon: '👥', title: 'Team Meeting', time: '1d ago', color: '#c0392b', bg: '#fef2f2' },
 ]
 
 const quickActions = [
   { label: 'Apply Leave', icon: CalendarDays, color: '#ef4444', bg: '#fef2f2' },
   { label: 'Attendance Req', icon: ClipboardList, color: '#f97316', bg: '#fff7ed' },
   { label: 'My Payslips', icon: FileText, color: '#8b5cf6', bg: '#f5f3ff' },
-  { label: 'TaskFlow', icon: Workflow, color: '#3b82f6', bg: '#eff6ff' },
+  { label: 'TaskFlow', icon: Workflow, color: '#c0392b', bg: '#fef2f2' },
   { label: 'Meeting Hub', icon: CheckSquare, color: '#22c55e', bg: '#f0fdf4' },
   { label: 'Reports', icon: BarChart2, color: '#ec4899', bg: '#fdf2f8' },
 ]
@@ -162,6 +164,40 @@ function DonutChart() {
 }
 
 export default function Overview() {
+  const user = getCurrentUser()
+  const [todayAttendance, setTodayAttendance] = useState(null)
+
+  useEffect(() => {
+    const fetchToday = async () => {
+      try {
+        const res = await getTodayAttendance()
+        if (res?.attendance) {
+          setTodayAttendance(res.attendance)
+        }
+      } catch (e) {
+        console.error('Failed to load overview attendance:', e)
+      }
+    }
+    fetchToday()
+  }, [])
+
+  const userInitials = user?.name
+    ? user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+    : 'U'
+
+  const formatTimeStr = (dateStr) => {
+    if (!dateStr) return '--:--'
+    return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const currentDateFormatted = new Date().toLocaleDateString(undefined, {
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+  })
+
+  const isCheckedIn = Boolean(todayAttendance?.isCurrentlyPunchedIn && !todayAttendance?.isOnBreak)
+  const isOnBreak = Boolean(todayAttendance?.isOnBreak)
+  const isShiftPaused = Boolean(todayAttendance?.checkIn && !todayAttendance?.isCurrentlyPunchedIn)
+
   return (
     <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }} className="responsive-layout-container">
 
@@ -185,37 +221,51 @@ export default function Overview() {
             background: 'rgba(255,255,255,0.2)',
             border: '3px solid rgba(255,255,255,0.4)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, fontSize: 28, fontWeight: 700, color: '#fff',
+            flexShrink: 0, fontSize: 26, fontWeight: 800, color: '#fff',
             position: 'relative',
           }}>
-            A
+            {userInitials}
             <div style={{
               position: 'absolute', bottom: 2, right: 2,
               width: 12, height: 12, borderRadius: '50%',
-              background: '#22c55e', border: '2px solid #fff',
+              background: isCheckedIn ? '#22c55e' : isOnBreak ? '#f59e0b' : '#94a3b8',
+              border: '2px solid #fff',
             }} />
           </div>
           <div style={{ flex: 1 }}>
-            <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 4 }}>Good Evening 🔥</p>
-            <h2 style={{ color: '#fff', fontSize: 26, fontWeight: 800, letterSpacing: 1, marginBottom: 6 }}>JOHN DOE</h2>
-            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>MERN STACK DEVELOPER · ID: TZ-2458</p>
+            <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 4 }}>Welcome back 🔥</p>
+            <h2 style={{ color: '#fff', fontSize: 24, fontWeight: 800, letterSpacing: 0.5, marginBottom: 4 }}>
+              {(user?.name || 'Staff Member').toUpperCase()}
+            </h2>
+            <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12.5 }}>
+              {user?.role === 'admin' ? 'SYSTEM ADMINISTRATOR' : 'STAFF MEMBER'} · ID: {user?.employeeId || 'TZ-STAFF'}
+            </p>
           </div>
           <div style={{ display: 'flex', gap: 10, flexShrink: 0 }} className="responsive-hero-actions">
             <button style={{
               padding: '8px 16px', borderRadius: 8,
-              background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
-              color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+              background: isCheckedIn
+                ? 'rgba(34, 197, 94, 0.25)'
+                : isOnBreak
+                  ? 'rgba(245, 158, 11, 0.25)'
+                  : 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'default',
               display: 'flex', alignItems: 'center', gap: 6,
             }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-              Checked In
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: isCheckedIn ? '#22c55e' : isOnBreak ? '#f59e0b' : '#94a3b8',
+                display: 'inline-block',
+              }} />
+              {isCheckedIn ? 'Checked In' : isOnBreak ? 'On Break' : isShiftPaused ? 'Shift Paused' : 'Not Checked In'}
             </button>
             <button style={{
               padding: '8px 16px', borderRadius: 8,
               background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)',
               color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer',
             }}>
-              Profile 72% ↻
+              Profile Verified ✓
             </button>
           </div>
         </div>
@@ -244,19 +294,30 @@ export default function Overview() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>Clock In / Out</p>
-                <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>📅 Fri, 25 Aug 2026</p>
+                <p style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>📅 {currentDateFormatted}</p>
               </div>
-              <span style={{ fontSize: 11, color: '#94a3b8', background: '#f8fafc', padding: '3px 8px', borderRadius: 6 }}>● Inactive</span>
+              <span style={{
+                fontSize: 11,
+                color: isCheckedIn ? '#16a34a' : isOnBreak ? '#d97706' : '#64748b',
+                background: isCheckedIn ? '#dcfce7' : isOnBreak ? '#fef3c7' : '#f8fafc',
+                padding: '3px 8px', borderRadius: 6, fontWeight: 600,
+              }}>
+                {isCheckedIn ? '● Active' : isOnBreak ? '☕ On Break' : isShiftPaused ? '● Shift Paused' : '● Inactive'}
+              </span>
             </div>
             <ClockTimer />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 8 }}>
               <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '10px 12px' }}>
                 <p style={{ fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>CLOCK IN</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>09:07 AM</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>
+                  {formatTimeStr(todayAttendance?.checkIn)}
+                </p>
               </div>
               <div style={{ background: '#fef2f2', borderRadius: 8, padding: '10px 12px' }}>
                 <p style={{ fontSize: 10, color: '#94a3b8', marginBottom: 3 }}>CLOCK OUT</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>06:13 PM</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>
+                  {formatTimeStr(todayAttendance?.checkOut)}
+                </p>
               </div>
             </div>
           </Card>

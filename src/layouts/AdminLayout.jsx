@@ -7,7 +7,7 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f8fafc' }} className="responsive-layout-wrapper">
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--tz-bg-app)' }} className="responsive-layout-wrapper">
       <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
         <AdminHeader onMenuClick={() => setSidebarOpen(true)} />
@@ -15,9 +15,9 @@ export default function AdminLayout() {
           <Outlet />
         </main>
         <footer style={{
-          padding: '12px 24px', borderTop: '1px solid #f1f5f9',
+          padding: '12px 24px', borderTop: '1px solid var(--tz-border)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: '#fff', fontSize: 12, color: '#94a3b8',
+          background: 'var(--tz-bg-card)', fontSize: 12, color: 'var(--tz-text-secondary)',
         }} className="responsive-footer">
           <span>© 2026 TravelZync HRM. All rights reserved.</span>
           <span>Made with ❤️ by TravelZync Team</span>

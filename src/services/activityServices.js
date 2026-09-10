@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import apiClient from "./apiClient";
 
 // =====================================================
 // Activity Heartbeat
@@ -8,21 +6,10 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export const sendActivityHeartbeat = async (attendanceId, status) => {
   try {
-    const token = localStorage.getItem("token");
-
-    const response = await axios.post(
-      `${API_URL}/activity/heartbeat`,
-      {
-        attendanceId,
-        status,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      },
-    );
+    const response = await apiClient.post("/activity/heartbeat", {
+      attendanceId,
+      status,
+    });
 
     return response.data;
   } catch (error) {
@@ -41,13 +28,7 @@ export const sendActivityHeartbeat = async (attendanceId, status) => {
 
 export const getMyActivity = async () => {
   try {
-    const token = localStorage.getItem("token");
-
-    const response = await axios.get(`${API_URL}/activity/my`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await apiClient.get("/activity/my");
 
     return response.data;
   } catch (error) {
@@ -59,3 +40,4 @@ export const getMyActivity = async () => {
     throw error;
   }
 };
+

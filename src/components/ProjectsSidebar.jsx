@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, Search, Sun, Bell } from 'lucide-react'
+import { useTheme } from '../hooks/useTheme'
 
 // Define the static list of projects matching the design details (Seclob replaced by TravelZync)
 export const PROJECTS_DATA = [
@@ -107,6 +108,7 @@ export const PROJECTS_DATA = [
 
 export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, setSelectedProjectId }) {
   const navigate = useNavigate()
+  const { isDark } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('all')
 
@@ -147,8 +149,10 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
 
       <aside 
         style={{
-          background: 'linear-gradient(180deg, #c0392b 0%, #922b21 60%, #7b241c 100%)',
-          borderRight: '1px solid rgba(255,255,255,0.1)',
+          background: isDark
+            ? '#0b101d'
+            : 'linear-gradient(180deg, #c0392b 0%, #922b21 60%, #7b241c 100%)',
+          borderRight: isDark ? '1px solid #1e293b' : '1px solid rgba(255,255,255,0.1)',
           display: 'flex',
           flexDirection: 'column',
           height: '100vh',

@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom'
+import { isUserAuthenticated, getUserRole, clearAuthSession } from '../services/authService'
 
 /**
  * A wrapper component that checks if the user is authenticated
@@ -9,19 +10,19 @@ import { Navigate } from 'react-router-dom'
  * @param {string} props.allowedRole - The role required to access this route ('admin' or 'employee')
  */
 export default function ProtectedRoute({ children, allowedRole }) {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
-  const userRole = localStorage.getItem('userRole') // 'admin' or 'employee'
+  const authenticated = isUserAuthenticated()
+  const userRole = getUserRole()
 
-  if (!isAuthenticated) {
-    // If not logged in, redirect to login page
+  if (!authenticated) {
+    clearAuthSession()
     return <Navigate to="/login" replace />
   }
 
   if (allowedRole && userRole !== allowedRole) {
-    // If role doesn't match, redirect to their default home page
     const defaultRedirect = userRole === 'admin' ? '/admin/dashboard' : '/employee/overview'
     return <Navigate to={defaultRedirect} replace />
   }
 
   return children
 }
+

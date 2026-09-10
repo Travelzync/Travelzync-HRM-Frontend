@@ -389,7 +389,7 @@ export default function TaskFlow() {
                     width: '28px',
                     height: '28px',
                     borderRadius: '50%',
-                    background: i % 2 === 0 ? '#3b82f6' : '#10b981',
+                    background: i % 2 === 0 ? '#c0392b' : '#922b21',
                     color: '#fff',
                     fontSize: '10px',
                     fontWeight: 700,
@@ -822,9 +822,9 @@ export default function TaskFlow() {
                                 <button 
                                   onClick={() => handleCompleteTask(task.id)}
                                   style={{
-                                    background: '#eff6ff',
-                                    color: '#2563eb',
-                                    border: '1px solid #3b82f640',
+                                    background: '#fef2f2',
+                                    color: '#c0392b',
+                                    border: '1px solid #fecaca',
                                     borderRadius: '4px',
                                     fontSize: '10px',
                                     fontWeight: 700,
@@ -871,9 +871,9 @@ export default function TaskFlow() {
                                 <button 
                                   onClick={() => handleCompleteTask(task.id)}
                                   style={{
-                                    background: '#eff6ff',
-                                    color: '#2563eb',
-                                    border: '1px solid #3b82f640',
+                                    background: '#fef2f2',
+                                    color: '#c0392b',
+                                    border: '1px solid #fecaca',
                                     borderRadius: '4px',
                                     fontSize: '10px',
                                     fontWeight: 700,
@@ -934,7 +934,7 @@ export default function TaskFlow() {
               }}
               style={{
                 marginTop: '16px',
-                background: '#3b82f6',
+                background: 'linear-gradient(135deg, #c0392b, #922b21)',
                 color: '#fff',
                 fontSize: '12px',
                 fontWeight: 600,

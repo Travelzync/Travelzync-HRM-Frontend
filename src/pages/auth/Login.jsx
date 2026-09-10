@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Shield, Users, TrendingUp, Globe } from 'lucide-react'
+import { Eye, EyeOff, Shield, Users, TrendingUp, Globe, Loader2 } from 'lucide-react'
+import { loginUser, setAuthSession, isUserAuthenticated, getUserRole } from '../../services/authService'
+import { showSuccess, showError, showWarning } from '../../utils/toast'
+import ThemeToggle from '../../components/ThemeToggle'
 
 const features = [
   { icon: Users, text: 'Manage your entire workforce' },
@@ -17,27 +20,61 @@ const stats = [
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  const handleLogin = () => {
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter email and password.')
+  useEffect(() => {
+    if (isUserAuthenticated()) {
+      const role = getUserRole()
+      if (role === 'admin') {
+        navigate('/admin/dashboard', { replace: true })
+      } else {
+        navigate('/employee/overview', { replace: true })
+      }
+    }
+  }, [navigate])
+
+  const handleLogin = async (e) => {
+    if (e) e.preventDefault()
+    if (!identifier.trim() || !password.trim()) {
+      const msg = 'Please enter your email / employee ID and password.'
+      setError(msg)
+      showWarning(msg)
       return
     }
     setError('')
+    setLoading(true)
 
-    // Simulate login and set roles in localStorage
-    const role = email.toLowerCase().includes('admin') ? 'admin' : 'employee'
-    localStorage.setItem('isAuthenticated', 'true')
-    localStorage.setItem('userRole', role)
+    try {
+      const trimmed = identifier.trim()
+      const payload = trimmed.includes('@')
+        ? { email: trimmed.toLowerCase(), password }
+        : { employeeId: trimmed.toUpperCase(), password }
 
-    if (role === 'admin') {
-      navigate('/admin/dashboard')
-    } else {
-      navigate('/employee/overview')
+      const data = await loginUser(payload)
+
+      if (data?.token && data?.user) {
+        setAuthSession(data.token, data.user)
+        showSuccess(`Welcome back, ${data.user.name}!`)
+        if (data.user.role === 'admin') {
+          navigate('/admin/dashboard', { replace: true })
+        } else {
+          navigate('/employee/overview', { replace: true })
+        }
+      } else {
+        const msg = 'Login failed: Invalid server response'
+        setError(msg)
+        showError(msg)
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Login failed. Please check your credentials.'
+      setError(msg)
+      showError(msg)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -127,12 +164,19 @@ export default function Login() {
       {/* ── Right Login Panel ── */}
       <div style={{
         flex: 1,
-        background: '#f8fafc',
+        background: 'var(--tz-bg-app)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '40px 24px',
+        position: 'relative',
+        transition: 'background-color 0.2s ease',
       }}>
+        {/* Floating Theme Toggle */}
+        <div style={{ position: 'absolute', top: 20, right: 24, zIndex: 10 }}>
+          <ThemeToggle />
+        </div>
+
         <div style={{ width: '100%', maxWidth: 420 }}>
 
           {/* Mobile logo */}
@@ -145,52 +189,54 @@ export default function Login() {
               <span style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>TZ</span>
             </div>
             <div>
-              <p style={{ fontWeight: 700, color: '#111827', lineHeight: 1 }}>TravelZync</p>
+              <p style={{ fontWeight: 700, color: 'var(--tz-text-primary)', lineHeight: 1 }}>TravelZync</p>
               <p style={{ color: '#ef4444', fontSize: 10, fontWeight: 600, letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: 3 }}>HRM Platform</p>
             </div>
           </div>
 
           {/* Heading */}
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontSize: 30, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Welcome back</h1>
-            <p style={{ color: '#6b7280', fontSize: 14 }}>Sign in to your TravelZync HRM account to continue.</p>
+            <h1 style={{ fontSize: 30, fontWeight: 700, color: 'var(--tz-text-primary)', marginBottom: 8 }}>Welcome back</h1>
+            <p style={{ color: 'var(--tz-text-muted)', fontSize: 14 }}>Sign in to your TravelZync HRM account to continue.</p>
           </div>
 
           {/* Card */}
           <div style={{
-            background: '#fff',
+            background: 'var(--tz-bg-card)',
             borderRadius: 16,
-            border: '1px solid #f1f5f9',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)',
+            border: '1px solid var(--tz-border)',
+            boxShadow: 'var(--tz-card-shadow)',
             padding: 32,
+            transition: 'all 0.2s ease',
           }}>
 
-            {/* Email */}
+            {/* Email or Employee ID */}
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
-                Email Address
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--tz-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+                Email Address or Employee ID
               </label>
               <input
-                type="email"
-                placeholder="you@company.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type="text"
+                placeholder="you@company.com or TZ-EMP-001"
+                value={identifier}
+                disabled={loading}
+                onChange={e => setIdentifier(e.target.value)}
                 style={{
                   width: '100%', padding: '11px 14px', borderRadius: 10,
-                  border: '1px solid #e2e8f0', fontSize: 14, color: '#111827',
-                  outline: 'none', background: '#fff',
+                  border: '1px solid var(--tz-input-border)', fontSize: 14, color: 'var(--tz-text-primary)',
+                  outline: 'none', background: loading ? 'var(--tz-bg-subtle)' : 'var(--tz-input-bg)',
                   boxSizing: 'border-box',
-                  transition: 'border-color 0.15s',
+                  transition: 'border-color 0.15s, background-color 0.2s ease',
                 }}
                 onFocus={e => e.target.style.borderColor = '#ef4444'}
-                onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                onBlur={e => e.target.style.borderColor = 'var(--tz-input-border)'}
               />
             </div>
 
             {/* Password */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <label style={{ fontSize: 11, fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--tz-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                   Password
                 </label>
                 <a href="#" style={{ fontSize: 12, color: '#ef4444', fontWeight: 500, textDecoration: 'none' }}>
@@ -202,17 +248,18 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   value={password}
+                  disabled={loading}
                   onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                  onKeyDown={e => e.key === 'Enter' && !loading && handleLogin()}
                   style={{
                     width: '100%', padding: '11px 42px 11px 14px', borderRadius: 10,
-                    border: '1px solid #e2e8f0', fontSize: 14, color: '#111827',
-                    outline: 'none', background: '#fff',
+                    border: '1px solid var(--tz-input-border)', fontSize: 14, color: 'var(--tz-text-primary)',
+                    outline: 'none', background: loading ? 'var(--tz-bg-subtle)' : 'var(--tz-input-bg)',
                     boxSizing: 'border-box',
-                    transition: 'border-color 0.15s',
+                    transition: 'border-color 0.15s, background-color 0.2s ease',
                   }}
                   onFocus={e => e.target.style.borderColor = '#ef4444'}
-                  onBlur={e => e.target.style.borderColor = '#e2e8f0'}
+                  onBlur={e => e.target.style.borderColor = 'var(--tz-input-border)'}
                 />
                 <button
                   type="button"
@@ -242,27 +289,46 @@ export default function Login() {
 
             {/* Error */}
             {error && (
-              <p style={{ fontSize: 12, color: '#ef4444', marginBottom: 12, textAlign: 'center' }}>{error}</p>
+              <div style={{
+                background: '#fef2f2',
+                border: '1px solid #fecaca',
+                borderRadius: 8,
+                padding: '10px 14px',
+                marginBottom: 16,
+              }}>
+                <p style={{ fontSize: 13, color: '#dc2626', margin: 0, textAlign: 'center', fontWeight: 500 }}>
+                  {error}
+                </p>
+              </div>
             )}
 
             {/* Login Button */}
             <button
               type="button"
+              disabled={loading}
               onClick={handleLogin}
               style={{
                 width: '100%', padding: '12px',
-                background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                background: loading ? '#f87171' : 'linear-gradient(135deg, #ef4444, #b91c1c)',
                 color: '#fff', fontWeight: 600, fontSize: 14,
-                border: 'none', borderRadius: 10, cursor: 'pointer',
+                border: 'none', borderRadius: 10, cursor: loading ? 'not-allowed' : 'pointer',
                 boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
                 transition: 'opacity 0.15s, transform 0.1s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
-              onMouseEnter={e => e.target.style.opacity = '0.92'}
-              onMouseLeave={e => e.target.style.opacity = '1'}
-              onMouseDown={e => e.target.style.transform = 'scale(0.99)'}
-              onMouseUp={e => e.target.style.transform = 'scale(1)'}
+              onMouseEnter={e => { if (!loading) e.target.style.opacity = '0.92' }}
+              onMouseLeave={e => { if (!loading) e.target.style.opacity = '1' }}
+              onMouseDown={e => { if (!loading) e.target.style.transform = 'scale(0.99)' }}
+              onMouseUp={e => { if (!loading) e.target.style.transform = 'scale(1)' }}
             >
-              Sign In to HRM
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Signing In...</span>
+                </>
+              ) : (
+                <span>Sign In to HRM</span>
+              )}
             </button>
           </div>
 
