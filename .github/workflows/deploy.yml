@@ -40,7 +40,7 @@ jobs:
       - name: Deploy dist contents to server via rsync
         run: |
           rsync -avz \
-            -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22" \
+            -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22222" \
             --exclude='.well-known' \
             --exclude='cgi-bin' \
             --exclude='.htaccess' \
