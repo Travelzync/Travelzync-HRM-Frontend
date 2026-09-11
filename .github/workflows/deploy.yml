@@ -36,9 +36,13 @@ jobs:
           chmod 700 "$HOME/.ssh"
           printf '%s\n' '${{ secrets.SSH_PRIVATE_KEY }}' > "$HOME/.ssh/id_rsa"
           chmod 600 "$HOME/.ssh/id_rsa"
-          ssh-keyscan -p 22 -H "${{ secrets.SSH_HOST }}" >> "$HOME/.ssh/known_hosts"
-          chmod 644 "$HOME/.ssh/known_hosts"
 
       - name: Deploy dist contents to server via rsync
         run: |
-          rsync -avz --exclude='.well-known' --exclude='cgi-bin' --exclude='.htaccess' dist/ "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/wgwhakud/travelzynclabs.in/"
+          rsync -avz \
+            -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22" \
+            --exclude='.well-known' \
+            --exclude='cgi-bin' \
+            --exclude='.htaccess' \
+            dist/ \
+            "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/wgwhakud/travelzynclabs.in/"
