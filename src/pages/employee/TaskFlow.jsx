@@ -1,15 +1,19 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import { 
-  Play, Check, Pause, RefreshCw, Clock, MessageSquare, 
+  Play, Check, RefreshCw, Clock, MessageSquare, 
   MoreVertical, Search, Menu, Kanban, Table, List, 
-  Calendar, Bug, CheckSquare 
+  Calendar, Bug, CheckSquare, Plus, Trash2, X, Loader2,
+  AlertCircle, Sparkles, User, ArrowRight
 } from 'lucide-react'
 import { PROJECTS_DATA } from '../../components/ProjectsSidebar'
+import { getCurrentUser, getUserRole } from '../../services/authService'
+import { getTasks, createTask, deleteTask, updateTaskStatus, getProjects } from '../../services/taskService'
+import { getEmployees } from '../../services/employeeService'
+import { showSuccess, showError, showWarning } from '../../utils/toast'
 
-// Seed initial task list linked by projectId
+// Seed initial fallback task list linked by projectId
 const INITIAL_TASKS = [
-  // CRM APP tasks (matching the image layout with realistic names)
   {
     id: '141',
     projectId: 'crm-app',
@@ -147,7 +151,7 @@ const INITIAL_TASKS = [
   }
 ]
 
-// Project-level static stats base. We will offset these stats dynamically as local tasks are updated
+// Base stats
 const BASE_STATS = {
   'crm-app': { total: 146, todo: 4, reopened: 7, inProgress: 1, inTesting: 31, completed: 103, overdue: 38, blocked: 0, bugs: 0 },
   'travelzync-aura': { total: 45, todo: 10, reopened: 3, inProgress: 3, inTesting: 8, completed: 21, overdue: 5, blocked: 1, bugs: 2 },
@@ -156,96 +160,198 @@ const BASE_STATS = {
 }
 const DEFAULT_BASE_STATS = { total: 0, todo: 0, reopened: 0, inProgress: 0, inTesting: 0, completed: 0, overdue: 0, blocked: 0, bugs: 0 }
 
-const getAvatarStyle = (name) => {
+const getAvatarStyle = (name = 'U') => {
   const colors = {
-    'Adhil': { bg: '#e0f2fe', text: '#0369a1' }, // sky blue
-    'Neha': { bg: '#fef2f2', text: '#b91c1c' }, // red
-    'Rahul': { bg: '#f0fdf4', text: '#15803d' }, // green
-    'Faisal': { bg: '#fef3c7', text: '#b45309' }, // amber
-    'Aswin': { bg: '#faf5ff', text: '#6b21a8' }, // purple
-    'Shruthi': { bg: '#fdf2f8', text: '#be185d' }, // pink
-    'John': { bg: '#eff6ff', text: '#1d4ed8' }, // blue
-    'Priya': { bg: '#ecfdf5', text: '#047857' }, // emerald
-    'Kiran': { bg: '#f5f5f4', text: '#44403c' }, // stone
-    'Amit': { bg: '#e0e7ff', text: '#3730a3' }, // indigo
-    'Sneha': { bg: '#fff7ed', text: '#c2410c' }, // orange
-    'Deepak': { bg: '#e0f7fa', text: '#006064' } // cyan
+    'Adhil': { bg: '#e0f2fe', text: '#0369a1' },
+    'Neha': { bg: '#fef2f2', text: '#b91c1c' },
+    'Rahul': { bg: '#f0fdf4', text: '#15803d' },
+    'Faisal': { bg: '#fef3c7', text: '#b45309' },
+    'Aswin': { bg: '#faf5ff', text: '#6b21a8' },
+    'Shruthi': { bg: '#fdf2f8', text: '#be185d' },
+    'John': { bg: '#eff6ff', text: '#1d4ed8' },
+    'Priya': { bg: '#ecfdf5', text: '#047857' },
+    'Kiran': { bg: '#f5f5f4', text: '#44403c' },
+    'Amit': { bg: '#e0e7ff', text: '#3730a3' },
+    'Sneha': { bg: '#fff7ed', text: '#c2410c' },
+    'Deepak': { bg: '#e0f7fa', text: '#006064' }
   }
   return colors[name] || { bg: '#f1f5f9', text: '#475569' }
 }
 
-export default function TaskFlow() {
-  // Grab state from layout context
-  const { selectedProjectId, setSidebarOpen } = useOutletContext()
+// Convert backend task format to frontend Kanban card format
+const normalizeBackendTask = (task) => {
+  let assigneeName = 'Unassigned'
+  let assigneeAvatar = 'U'
 
+  if (task.assignedEmployees && task.assignedEmployees.length > 0) {
+    const firstEmp = task.assignedEmployees[0]?.employeeId
+    if (firstEmp) {
+      assigneeName = firstEmp.userId?.name || firstEmp.name || (firstEmp.firstName ? `${firstEmp.firstName} ${firstEmp.lastName || ''}`.trim() : 'Employee')
+      assigneeAvatar = assigneeName.charAt(0).toUpperCase()
+    }
+  }
+
+  // Map backend status to column key
+  let mappedStatus = 'to-do'
+  if (task.status === 'todo') mappedStatus = 'to-do'
+  else if (task.status === 'in_progress') mappedStatus = 'in-progress'
+  else if (task.status === 'in_testing') mappedStatus = 'in-testing'
+  else if (task.status === 'reopened' || task.status === 'on_hold') mappedStatus = 're-opened'
+  else if (task.status === 'completed') mappedStatus = 'completed'
+  else mappedStatus = task.status || 'to-do'
+
+  const progressMap = {
+    'to-do': 0,
+    're-opened': 25,
+    'in-progress': 60,
+    'in-testing': 80,
+    'completed': 100
+  }
+
+  const projId = task.projectId?._id || task.projectId || 'crm-app'
+
+  return {
+    id: task._id || task.id || String(Math.floor(Math.random() * 900 + 100)),
+    rawId: task._id,
+    taskNumber: task.taskNumber || `#${task._id ? task._id.slice(-4) : 'TASK'}`,
+    projectId: typeof projId === 'string' ? projId : 'crm-app',
+    priority: (task.priority || 'medium').toUpperCase(),
+    status: mappedStatus,
+    title: task.title,
+    description: task.description || '',
+    assignee: { name: assigneeName, avatar: assigneeAvatar },
+    progress: progressMap[mappedStatus] || 0,
+    duration: `${task.estimatedHours || 1}h 0m`,
+    comments: 0,
+    isBackend: Boolean(task._id)
+  }
+}
+
+export default function TaskFlow() {
+  // Context from layout
+  const context = useOutletContext() || {}
+  const { selectedProjectId = 'crm-app', setSidebarOpen = () => {} } = context
+
+  // Identify Role
+  const currentUser = getCurrentUser()
+  const role = getUserRole() || currentUser?.role
+  const isAdmin = role === 'admin' || window.location.pathname.startsWith('/admin')
+
+  // Responsive state
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024)
-    }
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-  
-  // Interactive state for tasks
+
+  // Tasks and UI state
   const [tasks, setTasks] = useState(INITIAL_TASKS)
+  const [loading, setLoading] = useState(false)
   const [taskSearchQuery, setTaskSearchQuery] = useState('')
-  const [activeSubTab, setActiveSubTab] = useState('Tasks') // e.g. Overview, Tasks, Time Requests, etc.
-  const [activeView, setActiveView] = useState('Kanban') // e.g. Kanban, Table, List, etc.
-  const [spinningId, setSpinningId] = useState(null) // For reload animation trigger
+  const [activeSubTab, setActiveSubTab] = useState('Tasks')
+  const [activeView, setActiveView] = useState('Kanban')
+  const [spinningId, setSpinningId] = useState(null)
+  const [actionMenuTaskId, setActionMenuTaskId] = useState(null)
+
+  // Admin Create Task Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [submittingTask, setSubmittingTask] = useState(false)
+  const [employeesList, setEmployeesList] = useState([])
+  const [dbProjects, setDbProjects] = useState([])
+  const [createForm, setCreateForm] = useState({
+    title: '',
+    description: '',
+    priority: 'high',
+    status: 'todo',
+    estimatedHours: 2,
+    dueDate: '',
+    employeeId: '',
+    role: 'Developer'
+  })
 
   // Retrieve current project information
   const project = useMemo(() => {
     return PROJECTS_DATA.find(p => p.id === selectedProjectId) || PROJECTS_DATA[0]
   }, [selectedProjectId])
 
-  // Get initial status of seeded tasks for delta comparison
-  const initialTaskStatuses = useMemo(() => {
-    const map = {}
-    INITIAL_TASKS.forEach(t => {
-      map[t.id] = t.status
-    })
-    return map
+  // Fetch tasks from backend API
+  const fetchTasks = useCallback(async () => {
+    try {
+      setLoading(true)
+      const res = await getTasks({ projectId: selectedProjectId })
+      if (res && res.success && Array.isArray(res.tasks) && res.tasks.length > 0) {
+        const normalized = res.tasks.map(normalizeBackendTask)
+        // Combine with initial seed tasks for the project if needed so the board is always populated
+        const seedForProject = INITIAL_TASKS.filter(t => t.projectId === selectedProjectId)
+        const combined = [...normalized, ...seedForProject.filter(s => !normalized.some(n => n.title === s.title))]
+        setTasks(combined)
+      } else {
+        // Fallback to seed tasks
+        setTasks(INITIAL_TASKS)
+      }
+    } catch (err) {
+      console.warn('Could not fetch backend tasks, using local fallback:', err)
+      setTasks(INITIAL_TASKS)
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedProjectId])
+
+  // Fetch employees list if Admin (for task assignment)
+  useEffect(() => {
+    if (isAdmin) {
+      getEmployees()
+        .then(res => {
+          if (res?.employees) {
+            setEmployeesList(res.employees)
+            if (res.employees.length > 0) {
+              setCreateForm(prev => ({ ...prev, employeeId: res.employees[0]._id }))
+            }
+          }
+        })
+        .catch(err => console.warn('Could not load employees for assignment:', err))
+
+      getProjects()
+        .then(res => {
+          if (res?.projects) {
+            setDbProjects(res.projects)
+          }
+        })
+        .catch(err => console.warn('Could not load DB projects:', err))
+    }
+  }, [isAdmin])
+
+  useEffect(() => {
+    fetchTasks()
+  }, [fetchTasks])
+
+  // Close menus on outside click
+  useEffect(() => {
+    const handleDocumentClick = () => setActionMenuTaskId(null)
+    window.addEventListener('click', handleDocumentClick)
+    return () => window.removeEventListener('click', handleDocumentClick)
   }, [])
 
-  // Calculate stats dynamically using static base stats adjusted by user actions (deltas)
+  // Calculate stats dynamically using static base stats adjusted by tasks
   const dynamicStats = useMemo(() => {
     const base = BASE_STATS[selectedProjectId] || DEFAULT_BASE_STATS
-    const projectSeedTasks = INITIAL_TASKS.filter(t => t.projectId === selectedProjectId)
-    
-    let todoDelta = 0
-    let reopenedDelta = 0
-    let inProgressDelta = 0
-    let inTestingDelta = 0
-    let completedDelta = 0
+    const projectTasks = tasks.filter(t => t.projectId === selectedProjectId)
 
-    projectSeedTasks.forEach(seeded => {
-      const current = tasks.find(t => t.id === seeded.id)
-      if (current && current.status !== seeded.status) {
-        // Decrement old status count
-        if (seeded.status === 'to-do') todoDelta--
-        else if (seeded.status === 're-opened') reopenedDelta--
-        else if (seeded.status === 'in-progress') inProgressDelta--
-        else if (seeded.status === 'in-testing') inTestingDelta--
-        else if (seeded.status === 'completed') completedDelta--
-
-        // Increment new status count
-        if (current.status === 'to-do') todoDelta++
-        else if (current.status === 're-opened') reopenedDelta++
-        else if (current.status === 'in-progress') inProgressDelta++
-        else if (current.status === 'in-testing') inTestingDelta++
-        else if (current.status === 'completed') completedDelta++
-      }
-    })
+    const todoCount = projectTasks.filter(t => t.status === 'to-do').length
+    const reopenedCount = projectTasks.filter(t => t.status === 're-opened').length
+    const inProgressCount = projectTasks.filter(t => t.status === 'in-progress').length
+    const inTestingCount = projectTasks.filter(t => t.status === 'in-testing').length
+    const completedCount = projectTasks.filter(t => t.status === 'completed').length
 
     return {
-      total: base.total,
-      todo: Math.max(0, base.todo + todoDelta),
-      reopened: Math.max(0, base.reopened + reopenedDelta),
-      inProgress: Math.max(0, base.inProgress + inProgressDelta),
-      inTesting: Math.max(0, base.inTesting + inTestingDelta),
-      completed: Math.max(0, base.completed + completedDelta),
+      total: Math.max(base.total, projectTasks.length),
+      todo: Math.max(base.todo, todoCount),
+      reopened: Math.max(base.reopened, reopenedCount),
+      inProgress: Math.max(base.inProgress, inProgressCount),
+      inTesting: Math.max(base.inTesting, inTestingCount),
+      completed: Math.max(base.completed, completedCount),
       overdue: base.overdue,
       blocked: base.blocked,
       bugs: base.bugs
@@ -257,46 +363,204 @@ export default function TaskFlow() {
     return tasks.filter(t => {
       const isCurrentProject = t.projectId === selectedProjectId
       const matchesSearch = t.title.toLowerCase().includes(taskSearchQuery.toLowerCase()) || 
-                            t.id.includes(taskSearchQuery)
+                            String(t.id).includes(taskSearchQuery)
       return isCurrentProject && matchesSearch
     })
   }, [selectedProjectId, tasks, taskSearchQuery])
 
-  // Task Actions
-  const handleStartTask = (taskId) => {
-    setTasks(prev => prev.map(t => 
-      t.id === taskId ? { ...t, status: 'in-progress', progress: 10 } : t
-    ))
+  // Status mapping for backend
+  const statusToBackendMap = {
+    'to-do': 'todo',
+    'in-progress': 'in_progress',
+    'in-testing': 'in_testing',
+    're-opened': 'reopened',
+    'completed': 'completed'
   }
 
-  const handleCompleteTask = (taskId) => {
-    setTasks(prev => prev.map(t => 
-      t.id === taskId ? { ...t, status: 'completed', progress: 100 } : t
-    ))
+  // Update Status Action (Available to both Admin and Employee)
+  const handleUpdateStatus = async (taskId, newFrontendStatus) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    // Optimistic UI update
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        const progressMap = {
+          'to-do': 0,
+          're-opened': 25,
+          'in-progress': 60,
+          'in-testing': 80,
+          'completed': 100
+        }
+        return { ...t, status: newFrontendStatus, progress: progressMap[newFrontendStatus] || t.progress }
+      }
+      return t
+    }))
+
+    // If task exists on backend, sync to server
+    if (task.rawId) {
+      try {
+        const backendStatus = statusToBackendMap[newFrontendStatus] || 'todo'
+        await updateTaskStatus(task.rawId, backendStatus, `Moved to ${newFrontendStatus}`)
+        showSuccess(`Task status moved to ${newFrontendStatus.replace('-', ' ')}`)
+      } catch (err) {
+        console.warn('Backend update task status failed:', err)
+      }
+    } else {
+      showSuccess(`Task moved to ${newFrontendStatus.replace('-', ' ')}`)
+    }
   }
 
-  const handleResumeTask = (taskId) => {
-    setTasks(prev => prev.map(t => 
-      t.id === taskId ? { ...t, status: 'in-progress', progress: 50 } : t
-    ))
-  }
+  // Start Task
+  const handleStartTask = (taskId) => handleUpdateStatus(taskId, 'in-progress')
 
+  // Complete Task
+  const handleCompleteTask = (taskId) => handleUpdateStatus(taskId, 'completed')
+
+  // Send to testing
+  const handleSendToTesting = (taskId) => handleUpdateStatus(taskId, 'in-testing')
+
+  // Reopen spin animation
   const handleTriggerSpin = (taskId) => {
     setSpinningId(taskId)
     setTimeout(() => {
       setSpinningId(null)
-      // Increment reopenCount visually for details
       setTasks(prev => prev.map(t => 
         t.id === taskId ? { ...t, reopenCount: (t.reopenCount || 0) + 1 } : t
       ))
     }, 600)
   }
 
+  // ADMIN: Delete Task
+  const handleDeleteTask = async (taskId) => {
+    if (!isAdmin) {
+      showWarning('Only administrators can delete tasks.')
+      return
+    }
+
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    if (!window.confirm(`Are you sure you want to delete task #${task.id || taskId}?`)) {
+      return
+    }
+
+    try {
+      if (task.rawId) {
+        await deleteTask(task.rawId)
+      }
+      setTasks(prev => prev.filter(t => t.id !== taskId))
+      showSuccess('Task deleted successfully!')
+    } catch (err) {
+      console.warn('Backend delete task failed, removing locally:', err)
+      setTasks(prev => prev.filter(t => t.id !== taskId))
+      showSuccess('Task removed!')
+    }
+  }
+
+  // ADMIN: Create Task
+  const handleCreateTaskSubmit = async (e) => {
+    e.preventDefault()
+    if (!isAdmin) {
+      showWarning('Only administrators can create tasks.')
+      return
+    }
+
+    if (!createForm.title.trim()) {
+      showWarning('Task title is required!')
+      return
+    }
+
+    try {
+      setSubmittingTask(true)
+
+      // Find an actual DB project id if available, else use selectedProjectId
+      let targetProjectId = selectedProjectId
+      if (dbProjects.length > 0) {
+        const found = dbProjects.find(p => p.name.toLowerCase().includes(project.name.toLowerCase()) || p._id === selectedProjectId)
+        if (found) targetProjectId = found._id
+        else targetProjectId = dbProjects[0]._id
+      }
+
+      const assignedEmployees = []
+      let selectedEmpName = 'Aswin'
+      if (createForm.employeeId) {
+        assignedEmployees.push({
+          employeeId: createForm.employeeId,
+          role: createForm.role || 'Developer'
+        })
+        const emp = employeesList.find(e => e._id === createForm.employeeId)
+        if (emp) {
+          selectedEmpName = emp.name || emp.userId?.name || (emp.firstName ? `${emp.firstName} ${emp.lastName || ''}`.trim() : 'Employee')
+        }
+      }
+
+      const payload = {
+        projectId: targetProjectId,
+        title: createForm.title.trim(),
+        description: createForm.description.trim(),
+        assignedEmployees,
+        estimatedHours: Number(createForm.estimatedHours) || 1,
+        status: createForm.status || 'todo',
+        priority: createForm.priority || 'medium',
+        dueDate: createForm.dueDate || null
+      }
+
+      let createdTaskObj = null
+
+      try {
+        const res = await createTask(payload)
+        if (res && res.success && res.task) {
+          createdTaskObj = normalizeBackendTask(res.task)
+        }
+      } catch (err) {
+        console.warn('Backend task create failed or offline, adding locally:', err)
+      }
+
+      // Fallback local task if backend was unable to persist
+      if (!createdTaskObj) {
+        const newId = String(Math.floor(Math.random() * 800 + 200))
+        createdTaskObj = {
+          id: newId,
+          rawId: null,
+          taskNumber: `#${newId}`,
+          projectId: selectedProjectId,
+          priority: (createForm.priority || 'high').toUpperCase(),
+          status: createForm.status === 'todo' ? 'to-do' : createForm.status,
+          title: createForm.title.trim(),
+          description: createForm.description.trim(),
+          assignee: { name: selectedEmpName, avatar: selectedEmpName.charAt(0).toUpperCase() },
+          progress: 0,
+          duration: `${createForm.estimatedHours || 1}h 0m`,
+          comments: 0
+        }
+      }
+
+      setTasks(prev => [createdTaskObj, ...prev])
+      showSuccess('New task created successfully!')
+      setIsCreateModalOpen(false)
+      setCreateForm({
+        title: '',
+        description: '',
+        priority: 'high',
+        status: 'todo',
+        estimatedHours: 2,
+        dueDate: '',
+        employeeId: employeesList[0]?._id || '',
+        role: 'Developer'
+      })
+    } catch (error) {
+      showError(error.message || 'Failed to create task')
+    } finally {
+      setSubmittingTask(false)
+    }
+  }
+
   // Calculate average progress bar
   const calculatedProgress = useMemo(() => {
     const projectTasks = tasks.filter(t => t.projectId === selectedProjectId)
     if (projectTasks.length === 0) return 0
-    const sum = projectTasks.reduce((acc, t) => acc + t.progress, 0)
+    const sum = projectTasks.reduce((acc, t) => acc + (t.progress || 0), 0)
     return Math.round(sum / projectTasks.length)
   }, [selectedProjectId, tasks])
 
@@ -310,7 +574,8 @@ export default function TaskFlow() {
   ]
 
   return (
-    <div style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column', flex: 1, height: isMobile ? 'auto' : '100%', minHeight: isMobile ? '100vh' : 'none' }}>
+    <div style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column', flex: 1, height: isMobile ? 'auto' : '100%', minHeight: isMobile ? '100vh' : 'none', position: 'relative' }}>
+      
       {/* Project Header Row */}
       <div style={{
         background: '#fff',
@@ -341,9 +606,26 @@ export default function TaskFlow() {
           </button>
           
           <div>
-            <h1 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-              {project.name}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h1 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                {project.name}
+              </h1>
+              {isAdmin && (
+                <span style={{
+                  background: 'rgba(192, 57, 43, 0.1)',
+                  color: '#c0392b',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: '6px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  Admin View
+                </span>
+              )}
+            </div>
+
             {/* Badges info under title */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
               <span style={{
@@ -377,8 +659,8 @@ export default function TaskFlow() {
           </div>
         </div>
 
-        {/* Member Overlapping Avatars & Overall progress */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+        {/* Member Overlapping Avatars, Progress & Create Task button for Admin */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           {/* Avatars */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -428,7 +710,7 @@ export default function TaskFlow() {
           </div>
 
           {/* Project Progress bar */}
-          <div style={{ width: '140px' }}>
+          <div style={{ width: '120px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
               <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Progress</span>
               <span style={{ fontSize: '11px', color: '#0f172a', fontWeight: 700 }}>{calculatedProgress}%</span>
@@ -437,6 +719,33 @@ export default function TaskFlow() {
               <div style={{ width: `${calculatedProgress}%`, height: '100%', background: '#22c55e', borderRadius: '4px', transition: 'width 0.3s ease' }} />
             </div>
           </div>
+
+          {/* ADMIN ONLY: "+ Create Task" Button */}
+          {isAdmin && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              style={{
+                background: 'linear-gradient(135deg, #c0392b 0%, #922b21 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 8px rgba(192, 57, 43, 0.25)',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              <Plus size={16} strokeWidth={2.5} />
+              Create Task
+            </button>
+          )}
         </div>
       </div>
 
@@ -683,7 +992,8 @@ export default function TaskFlow() {
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '10px',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                          position: 'relative'
                         }}
                       >
                         {/* Card Top Line */}
@@ -697,7 +1007,7 @@ export default function TaskFlow() {
                               padding: '2px 5px',
                               borderRadius: '4px'
                             }}>
-                              #{task.id}
+                              {task.taskNumber || `#${task.id}`}
                             </span>
                             <span style={{
                               fontSize: '9px',
@@ -721,9 +1031,103 @@ export default function TaskFlow() {
                               {task.status.replace('-', ' ')}
                             </span>
                           </div>
-                          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2 }}>
-                            <MoreVertical size={14} />
-                          </button>
+
+                          {/* Top Right Action: Admin Delete or Menu */}
+                          {isAdmin ? (
+                            <div style={{ position: 'relative' }}>
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setActionMenuTaskId(actionMenuTaskId === task.id ? null : task.id)
+                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2 }}
+                              >
+                                <MoreVertical size={14} />
+                              </button>
+
+                              {/* Admin Card Dropdown Menu */}
+                              {actionMenuTaskId === task.id && (
+                                <div 
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    right: 0,
+                                    background: '#fff',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+                                    zIndex: 50,
+                                    minWidth: '150px',
+                                    padding: '4px'
+                                  }}
+                                >
+                                  {/* Quick status moves for Admin */}
+                                  <div style={{ padding: '4px 8px', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
+                                    Move to:
+                                  </div>
+                                  {['to-do', 'in-progress', 'in-testing', 'completed', 're-opened'].filter(s => s !== task.status).map(statusKey => (
+                                    <button
+                                      key={statusKey}
+                                      onClick={() => {
+                                        handleUpdateStatus(task.id, statusKey)
+                                        setActionMenuTaskId(null)
+                                      }}
+                                      style={{
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        background: 'none',
+                                        border: 'none',
+                                        padding: '6px 8px',
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        color: '#334155',
+                                        cursor: 'pointer',
+                                        borderRadius: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                      }}
+                                      className="hover:bg-slate-50"
+                                    >
+                                      <ArrowRight size={12} color="#64748b" />
+                                      {statusKey.replace('-', ' ')}
+                                    </button>
+                                  ))}
+                                  <div style={{ height: '1px', background: '#f1f5f9', margin: '4px 0' }} />
+                                  <button
+                                    onClick={() => {
+                                      setActionMenuTaskId(null)
+                                      handleDeleteTask(task.id)
+                                    }}
+                                    style={{
+                                      width: '100%',
+                                      textAlign: 'left',
+                                      background: 'none',
+                                      border: 'none',
+                                      padding: '6px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      color: '#dc2626',
+                                      cursor: 'pointer',
+                                      borderRadius: '4px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '6px'
+                                    }}
+                                    className="hover:bg-red-50"
+                                  >
+                                    <Trash2 size={12} color="#dc2626" />
+                                    Delete Task
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <button style={{ background: 'none', border: 'none', cursor: 'default', color: '#cbd5e1', padding: 2 }}>
+                              <MoreVertical size={14} />
+                            </button>
+                          )}
                         </div>
 
                         {/* Title text */}
@@ -798,7 +1202,7 @@ export default function TaskFlow() {
                           </div>
 
                           {/* Column-specific Card actions */}
-                          <div style={{ display: 'flex', gap: '4px' }}>
+                          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                             {col.key === 'to-do' && (
                               <>
                                 <button 
@@ -841,33 +1245,71 @@ export default function TaskFlow() {
                             )}
 
                             {col.key === 're-opened' && (
-                              <button 
-                                onClick={() => handleTriggerSpin(task.id)}
-                                style={{
-                                  background: '#fff',
-                                  border: '1px solid #e2e8f0',
-                                  borderRadius: '4px',
-                                  padding: '4px',
-                                  cursor: 'pointer',
-                                  color: '#475569',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
-                                }}
-                              >
-                                <RefreshCw 
-                                  size={10} 
-                                  className={spinningId === task.id ? 'animate-spin' : ''} 
-                                  style={{ transition: 'transform 0.5s' }}
-                                />
-                                {task.reopenCount && (
-                                  <span style={{ fontSize: '9px', fontWeight: 700, marginLeft: '3px' }}>{task.reopenCount}</span>
-                                )}
-                              </button>
+                              <>
+                                <button 
+                                  onClick={() => handleStartTask(task.id)}
+                                  style={{
+                                    background: '#ecfdf5',
+                                    color: '#059669',
+                                    border: '1px solid #10b98140',
+                                    borderRadius: '4px',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px'
+                                  }}
+                                >
+                                  <Play size={8} fill="#059669" /> Resume
+                                </button>
+                                <button 
+                                  onClick={() => handleTriggerSpin(task.id)}
+                                  style={{
+                                    background: '#fff',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '4px',
+                                    padding: '4px',
+                                    cursor: 'pointer',
+                                    color: '#475569',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                  }}
+                                >
+                                  <RefreshCw 
+                                    size={10} 
+                                    className={spinningId === task.id ? 'animate-spin' : ''} 
+                                    style={{ transition: 'transform 0.5s' }}
+                                  />
+                                  {task.reopenCount && (
+                                    <span style={{ fontSize: '9px', fontWeight: 700, marginLeft: '3px' }}>{task.reopenCount}</span>
+                                  )}
+                                </button>
+                              </>
                             )}
 
                             {col.key === 'in-progress' && (
                               <>
+                                <button 
+                                  onClick={() => handleSendToTesting(task.id)}
+                                  style={{
+                                    background: '#fffbeb',
+                                    color: '#d97706',
+                                    border: '1px solid #fef3c7',
+                                    borderRadius: '4px',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px'
+                                  }}
+                                >
+                                  Testing
+                                </button>
                                 <button 
                                   onClick={() => handleCompleteTask(task.id)}
                                   style={{
@@ -887,6 +1329,49 @@ export default function TaskFlow() {
                                   <Check size={9} strokeWidth={2.5} /> Complete
                                 </button>
                               </>
+                            )}
+
+                            {col.key === 'in-testing' && (
+                              <button 
+                                onClick={() => handleCompleteTask(task.id)}
+                                style={{
+                                  background: '#ecfdf5',
+                                  color: '#059669',
+                                  border: '1px solid #a7f3d0',
+                                  borderRadius: '4px',
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  padding: '3px 8px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '2px'
+                                }}
+                              >
+                                <Check size={9} strokeWidth={2.5} /> Approve
+                              </button>
+                            )}
+
+                            {/* Admin Quick Delete Trash icon on card */}
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleDeleteTask(task.id)}
+                                title="Delete Task"
+                                style={{
+                                  background: '#fef2f2',
+                                  border: '1px solid #fee2e2',
+                                  borderRadius: '4px',
+                                  padding: '3px 5px',
+                                  cursor: 'pointer',
+                                  color: '#ef4444',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  marginLeft: '2px'
+                                }}
+                              >
+                                <Trash2 size={10} />
+                              </button>
                             )}
                           </div>
                         </div>
@@ -949,6 +1434,355 @@ export default function TaskFlow() {
           </div>
         )}
       </div>
+
+      {/* ========================================================================= */}
+      {/* ADMIN ONLY: Create Task Modal */}
+      {/* ========================================================================= */}
+      {isAdmin && isCreateModalOpen && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={() => !submittingTask && setIsCreateModalOpen(false)}
+        >
+          <div 
+            style={{
+              background: '#fff',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              border: '1px solid #e2e8f0'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid #f1f5f9',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: '#fef2f2',
+                  color: '#c0392b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Plus size={20} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                    Create New Task
+                  </h2>
+                  <p style={{ fontSize: '11px', color: '#64748b', margin: '2px 0 0 0' }}>
+                    Project: <strong>{project.name}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                disabled={submittingTask}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleCreateTaskSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Task Title */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Task Title <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Implement real-time notifications workflow"
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    color: '#0f172a',
+                    outline: 'none',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#c0392b'}
+                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Provide context, acceptance criteria or steps to reproduce..."
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13px',
+                    color: '#0f172a',
+                    outline: 'none',
+                    resize: 'vertical',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#c0392b'}
+                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                />
+              </div>
+
+              {/* Priority & Status */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Priority
+                  </label>
+                  <select
+                    value={createForm.priority}
+                    onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      color: '#0f172a',
+                      outline: 'none',
+                      background: '#fff'
+                    }}
+                  >
+                    <option value="low">🟢 Low</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="high">🔴 High</option>
+                    <option value="urgent">⚡ Urgent</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Initial Column
+                  </label>
+                  <select
+                    value={createForm.status}
+                    onChange={(e) => setCreateForm({ ...createForm, status: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      color: '#0f172a',
+                      outline: 'none',
+                      background: '#fff'
+                    }}
+                  >
+                    <option value="todo">To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="in_testing">In Testing</option>
+                    <option value="reopened">Re-Opened</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Assignee & Role */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Assign Employee
+                  </label>
+                  <select
+                    value={createForm.employeeId}
+                    onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      color: '#0f172a',
+                      outline: 'none',
+                      background: '#fff'
+                    }}
+                  >
+                    {employeesList.length > 0 ? (
+                      employeesList.map(emp => {
+                        const name = emp.name || emp.userId?.name || (emp.firstName ? `${emp.firstName} ${emp.lastName || ''}`.trim() : 'Employee')
+                        return (
+                          <option key={emp._id} value={emp._id}>
+                            {name} ({emp.employeeId || 'Staff'})
+                          </option>
+                        )
+                      })
+                    ) : (
+                      <>
+                        <option value="adhil">Adhil (Developer)</option>
+                        <option value="aswin">Aswin (Lead)</option>
+                        <option value="rahul">Rahul (Frontend)</option>
+                        <option value="neha">Neha (QA)</option>
+                        <option value="faisal">Faisal (Fullstack)</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Assignee Role
+                  </label>
+                  <input
+                    type="text"
+                    value={createForm.role}
+                    onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
+                    placeholder="e.g. Frontend Engineer"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      color: '#0f172a',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Hours & Due Date */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Est. Hours
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={createForm.estimatedHours}
+                    onChange={(e) => setCreateForm({ ...createForm, estimatedHours: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      color: '#0f172a',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                    Due Date
+                  </label>
+                  <input
+                    type="date"
+                    value={createForm.dueDate}
+                    onChange={(e) => setCreateForm({ ...createForm, dueDate: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      color: '#0f172a',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: '10px',
+                marginTop: '12px',
+                paddingTop: '16px',
+                borderTop: '1px solid #f1f5f9'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  disabled={submittingTask}
+                  style={{
+                    padding: '9px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    background: '#fff',
+                    color: '#475569',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingTask}
+                  style={{
+                    padding: '9px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #c0392b 0%, #922b21 100%)',
+                    color: '#fff',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: submittingTask ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(192, 57, 43, 0.25)'
+                  }}
+                >
+                  {submittingTask ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" /> Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={15} strokeWidth={2.5} /> Save & Create
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

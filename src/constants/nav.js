@@ -32,6 +32,7 @@ export const ADMIN_NAV = [
   { label: 'Travel CRM', path: '/admin/crm', icon: Compass },
   { label: 'Company Chat', path: '/admin/chat', icon: MessageSquare },
   { label: 'Meeting Hub', path: '/admin/meeting-hub', icon: Video },
+  { label: 'TaskFlow', path: '/admin/taskflow', icon: Workflow },
   { label: 'Notifications', path: '/admin/notifications', icon: Bell },
   { label: 'Users', path: '/admin/users', icon: UserCheck },
   { label: 'Employees', path: '/admin/employees', icon: Users },

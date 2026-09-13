@@ -92,6 +92,7 @@ const router = createBrowserRouter([
       { path: 'crm', element: <ACRM /> },
       { path: 'chat', element: <AChat /> },
       { path: 'meeting-hub', element: <AMeetingHub /> },
+      { path: 'taskflow', element: <TaskFlow /> },
       { path: 'users', element: <Users /> },
       { path: 'employees', element: <Employees /> },
       { path: 'departments', element: <Departments /> },

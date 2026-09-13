@@ -106,7 +106,7 @@ export const PROJECTS_DATA = [
   }
 ]
 
-export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, setSelectedProjectId }) {
+export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, setSelectedProjectId, backPath }) {
   const navigate = useNavigate()
   const { isDark } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
@@ -132,9 +132,15 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
     })
   }, [activeTab, searchQuery])
 
-  // Navigate back to overview to restore the main EmployeeSidebar
+  // Navigate back to overview/dashboard to restore the main sidebar
   const handleBack = () => {
-    navigate('/employee/overview')
+    if (backPath) {
+      navigate(backPath)
+    } else if (window.location.pathname.startsWith('/admin')) {
+      navigate('/admin/dashboard')
+    } else {
+      navigate('/employee/overview')
+    }
   }
 
   return (
