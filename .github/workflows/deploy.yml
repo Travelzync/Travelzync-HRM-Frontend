@@ -37,12 +37,6 @@ jobs:
           printf '%s\n' '${{ secrets.SSH_PRIVATE_KEY }}' > "$HOME/.ssh/id_rsa"
           chmod 600 "$HOME/.ssh/id_rsa"
 
-      - name: Deploy dist contents to server via rsync
+      - name: Deploy dist contents to server via scp
         run: |
-          rsync -avz \
-            -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 22999" \
-            --exclude='.well-known' \
-            --exclude='cgi-bin' \
-            --exclude='.htaccess' \
-            dist/ \
-            "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/wgwhakud/travelzynclabs.in/"
+          scp -P 22999 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r dist/* "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/wgwhakud/travelzynclabs.in/"
