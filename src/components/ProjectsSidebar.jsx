@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, Search, Sun, Bell } from 'lucide-react'
-import { useTheme } from '../hooks/useTheme'
+import { getProjects } from '../services/taskService'
 
-// Define the static list of projects matching the design details (Seclob replaced by TravelZync)
+// Define projects matching the exact design screenshot
 export const PROJECTS_DATA = [
   {
     id: 'crm-app',
+    code: 'CRM-APP',
     name: 'CRM APP (Comparison B/W Mobile View & App)',
     tech: 'Flutter',
     priority: 'high',
@@ -16,6 +17,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'travelzync-aura',
+    code: 'TZ-AURA',
     name: 'TravelZync Aura New Design',
     tech: 'React',
     priority: 'high',
@@ -25,6 +27,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'travelzync-jobs',
+    code: 'TZ-JOBS',
     name: 'TravelZync Jobs',
     tech: 'React',
     priority: 'high',
@@ -34,6 +37,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'malabarkeys',
+    code: 'MALABAR',
     name: 'Malabarkeys',
     tech: 'React',
     priority: 'high',
@@ -43,6 +47,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'crm-admin-pa',
+    code: 'CRM-PA',
     name: 'CRM APP(ADMIN PANEL)',
     tech: 'React',
     priority: 'high',
@@ -52,6 +57,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'crm-admin-panel',
+    code: 'CRM-ADM',
     name: 'CRM ADMIN PANEL',
     tech: 'React',
     priority: 'high',
@@ -61,6 +67,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'travelzync-rooms',
+    code: 'TZ-ROOMS',
     name: 'TravelZync Rooms',
     tech: 'React',
     priority: 'medium',
@@ -70,6 +77,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'travelzync-saloon',
+    code: 'TZ-SALOON',
     name: 'TravelZync Aura Saloon Management',
     tech: 'React',
     priority: 'high',
@@ -79,6 +87,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'crm-performance',
+    code: 'CRM-PERF',
     name: 'CRM PERFORMANCE',
     tech: 'React',
     priority: 'high',
@@ -88,6 +97,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'superadmin-crm',
+    code: 'SUP-CRM',
     name: 'SuperAdmin TravelZync Crm',
     tech: 'React',
     priority: 'medium',
@@ -97,6 +107,7 @@ export const PROJECTS_DATA = [
   },
   {
     id: 'walkingoals',
+    code: 'WALKING',
     name: 'Walkingoals',
     tech: 'React',
     priority: 'medium',
@@ -108,29 +119,54 @@ export const PROJECTS_DATA = [
 
 export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, setSelectedProjectId, backPath }) {
   const navigate = useNavigate()
-  const { isDark } = useTheme()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('all')
+  const [dbProjects, setDbProjects] = useState([])
 
-  // Calculate dynamic counts for the filter badges
+  // Fetch projects from backend API to sync with database
+  useEffect(() => {
+    getProjects()
+      .then(res => {
+        if (res?.projects && Array.isArray(res.projects) && res.projects.length > 0) {
+          setDbProjects(res.projects)
+        }
+      })
+      .catch(err => console.warn('Could not fetch backend projects:', err))
+  }, [])
+
+  // Merge static project visual configurations with backend IDs if available
+  const projectsList = useMemo(() => {
+    return PROJECTS_DATA.map(p => {
+      const match = dbProjects.find(db => 
+        db.projectCode?.toUpperCase() === p.code || 
+        db.name?.toLowerCase().includes(p.name.slice(0, 10).toLowerCase())
+      )
+      return {
+        ...p,
+        dbId: match?._id || p.id
+      }
+    })
+  }, [dbProjects])
+
+  // Calculate dynamic counts for the filter badges matching screenshot
   const counts = useMemo(() => {
     return {
-      all: PROJECTS_DATA.length,
-      active: PROJECTS_DATA.filter(p => p.status === 'active').length,
-      pending: PROJECTS_DATA.filter(p => p.status === 'pending').length,
-      onHold: PROJECTS_DATA.filter(p => p.status === 'on-hold').length
+      all: projectsList.length,
+      active: projectsList.filter(p => p.status === 'active').length,
+      pending: projectsList.filter(p => p.status === 'pending').length,
+      onHold: projectsList.filter(p => p.status === 'on-hold').length
     }
-  }, [])
+  }, [projectsList])
 
   // Filter projects list based on selected status tab and search text
   const filteredProjects = useMemo(() => {
-    return PROJECTS_DATA.filter(p => {
+    return projectsList.filter(p => {
       const matchesTab = activeTab === 'all' || p.status === activeTab
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             p.tech.toLowerCase().includes(searchQuery.toLowerCase())
       return matchesTab && matchesSearch
     })
-  }, [activeTab, searchQuery])
+  }, [projectsList, activeTab, searchQuery])
 
   // Navigate back to overview/dashboard to restore the main sidebar
   const handleBack = () => {
@@ -148,30 +184,28 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
       {/* Mobile background overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/40 z-40 lg:hidden" 
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden" 
           onClick={onClose} 
         />
       )}
 
       <aside 
         style={{
-          background: isDark
-            ? '#0b101d'
-            : 'linear-gradient(180deg, #c0392b 0%, #922b21 60%, #7b241c 100%)',
-          borderRight: isDark ? '1px solid #1e293b' : '1px solid rgba(255,255,255,0.1)',
+          background: '#090e1c',
+          borderRight: '1px solid #172036',
           display: 'flex',
           flexDirection: 'column',
           height: '100vh',
-          width: '240px',
+          width: '245px',
         }}
         className={`fixed lg:static top-0 left-0 z-50 shrink-0 transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        {/* Sidebar Header: Back Button & Icons */}
+        {/* Sidebar Header: Back Button & Icons matching screenshot */}
         <div style={{
           padding: '16px',
-          borderBottom: '1px solid rgba(255,255,255,0.12)',
+          borderBottom: '1px solid #172036',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -188,7 +222,7 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
               gap: 4,
               fontSize: '14px',
               fontWeight: 700,
-              color: '#fff',
+              color: '#f8fafc',
               padding: '4px 0'
             }}
           >
@@ -198,23 +232,23 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
 
           {/* Quick Icons */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', padding: 4 }}>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 4 }}>
               <Sun size={15} />
             </button>
             <div style={{ position: 'relative' }}>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)', padding: 4 }}>
+              <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 4 }}>
                 <Bell size={15} />
               </button>
               <span style={{
                 position: 'absolute',
                 top: 0,
                 right: 0,
-                background: '#fff',
-                color: '#c0392b',
+                background: '#c0392b',
+                color: '#fff',
                 fontSize: '8px',
                 fontWeight: 700,
                 borderRadius: '8px',
-                padding: '1px 3px',
+                padding: '1px 4px',
                 lineHeight: 1,
                 transform: 'translate(40%, -40%)'
               }}>99+</span>
@@ -222,18 +256,18 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
           </div>
         </div>
 
-        {/* Project Search Bar */}
+        {/* Project Search Bar in Dark theme */}
         <div style={{ padding: '12px 14px 8px' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 6,
-            background: 'rgba(255,255,255,0.1)',
-            border: '1px solid rgba(255,255,255,0.15)',
+            gap: 8,
+            background: '#111827',
+            border: '1px solid #1f293d',
             borderRadius: '6px',
             padding: '6px 10px'
           }}>
-            <Search size={13} color="rgba(255,255,255,0.6)" />
+            <Search size={13} color="#64748b" />
             <input 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -243,28 +277,28 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
                 background: 'none',
                 outline: 'none',
                 fontSize: '12px',
-                color: '#fff',
+                color: '#f8fafc',
                 width: '100%'
               }}
-              className="placeholder-white/50"
+              className="placeholder-slate-500"
             />
           </div>
         </div>
 
-        {/* Category Filters Tab (All, Active, Pending, On Hold) */}
+        {/* Category Filters Tab (All 11, Active 5, Pending 5, On Hold 1) matching screenshot */}
         <div style={{ 
           padding: '4px 10px 8px', 
           display: 'flex', 
           flexWrap: 'wrap', 
           gap: '4px',
-          borderBottom: '1px solid rgba(255,255,255,0.12)'
+          borderBottom: '1px solid #172036'
         }}>
           <button 
             onClick={() => setActiveTab('all')}
             style={{
-              background: activeTab === 'all' ? '#fff' : 'rgba(255,255,255,0.1)',
-              color: activeTab === 'all' ? '#c0392b' : 'rgba(255,255,255,0.85)',
-              border: 'none',
+              background: activeTab === 'all' ? '#1e293b' : '#111827',
+              color: activeTab === 'all' ? '#ffffff' : '#94a3b8',
+              border: activeTab === 'all' ? '1px solid #334155' : '1px solid transparent',
               borderRadius: '4px',
               fontSize: '10px',
               fontWeight: 600,
@@ -278,9 +312,9 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
           <button 
             onClick={() => setActiveTab('active')}
             style={{
-              background: activeTab === 'active' ? '#fff' : 'rgba(255,255,255,0.1)',
-              color: activeTab === 'active' ? '#c0392b' : 'rgba(255,255,255,0.85)',
-              border: 'none',
+              background: activeTab === 'active' ? '#1e293b' : '#111827',
+              color: activeTab === 'active' ? '#ffffff' : '#94a3b8',
+              border: activeTab === 'active' ? '1px solid #334155' : '1px solid transparent',
               borderRadius: '4px',
               fontSize: '10px',
               fontWeight: 600,
@@ -294,9 +328,9 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
           <button 
             onClick={() => setActiveTab('pending')}
             style={{
-              background: activeTab === 'pending' ? '#fff' : 'rgba(255,255,255,0.1)',
-              color: activeTab === 'pending' ? '#c0392b' : 'rgba(255,255,255,0.85)',
-              border: 'none',
+              background: activeTab === 'pending' ? '#1e293b' : '#111827',
+              color: activeTab === 'pending' ? '#ffffff' : '#94a3b8',
+              border: activeTab === 'pending' ? '1px solid #334155' : '1px solid transparent',
               borderRadius: '4px',
               fontSize: '10px',
               fontWeight: 600,
@@ -310,9 +344,9 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
           <button 
             onClick={() => setActiveTab('on-hold')}
             style={{
-              background: activeTab === 'on-hold' ? '#fff' : 'rgba(255,255,255,0.1)',
-              color: activeTab === 'on-hold' ? '#c0392b' : 'rgba(255,255,255,0.85)',
-              border: 'none',
+              background: activeTab === 'on-hold' ? '#1e293b' : '#111827',
+              color: activeTab === 'on-hold' ? '#ffffff' : '#94a3b8',
+              border: activeTab === 'on-hold' ? '1px solid #334155' : '1px solid transparent',
               borderRadius: '4px',
               fontSize: '10px',
               fontWeight: 600,
@@ -325,10 +359,10 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
           </button>
         </div>
 
-        {/* Scrollable Project List */}
+        {/* Scrollable Project List matching screenshot */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '6px' }} className="hide-scroll">
           {filteredProjects.map((project) => {
-            const isSelected = selectedProjectId === project.id
+            const isSelected = selectedProjectId === project.id || selectedProjectId === project.code || selectedProjectId === project.dbId
             return (
               <div
                 key={project.id}
@@ -343,12 +377,12 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
                   padding: '10px',
                   borderRadius: '8px',
                   cursor: 'pointer',
-                  marginBottom: '2px',
+                  marginBottom: '3px',
                   transition: 'all 0.15s',
-                  background: isSelected ? '#fff' : 'transparent',
-                  border: isSelected ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent'
+                  background: isSelected ? '#ffffff' : 'transparent',
+                  border: isSelected ? '1px solid #ffffff' : '1px solid transparent'
                 }}
-                className={!isSelected ? 'hover:bg-white/6' : ''}
+                className={!isSelected ? 'hover:bg-slate-800/40' : ''}
               >
                 {/* Colored Icon box */}
                 <div style={{
@@ -356,7 +390,7 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
                   height: '32px',
                   borderRadius: '6px',
                   background: project.color,
-                  opacity: 0.85,
+                  opacity: 0.95,
                   flexShrink: 0
                 }} />
 
@@ -364,8 +398,8 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{
                     fontSize: '12px',
-                    fontWeight: 600,
-                    color: isSelected ? '#c0392b' : 'rgba(255,255,255,0.95)',
+                    fontWeight: 700,
+                    color: isSelected ? '#0f172a' : '#f8fafc',
                     margin: 0,
                     lineHeight: 1.2
                   }} className="truncate">
@@ -373,7 +407,7 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
                   </p>
                   <p style={{
                     fontSize: '10px',
-                    color: isSelected ? 'rgba(192, 57, 43, 0.7)' : 'rgba(255,255,255,0.6)',
+                    color: isSelected ? '#64748b' : '#94a3b8',
                     margin: '2px 0 0 0'
                   }}>
                     {project.tech} - {project.priority}
@@ -383,8 +417,8 @@ export default function ProjectsSidebar({ isOpen, onClose, selectedProjectId, se
                 {/* Badge Count */}
                 {project.badge && (
                   <span style={{
-                    background: isSelected ? '#c0392b' : 'rgba(255,255,255,0.15)',
-                    color: '#fff',
+                    background: isSelected ? '#ef4444' : '#1e293b',
+                    color: '#ffffff',
                     fontSize: '10px',
                     fontWeight: 700,
                     borderRadius: '10px',

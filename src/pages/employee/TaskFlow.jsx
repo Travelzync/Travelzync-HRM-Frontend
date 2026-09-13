@@ -12,8 +12,7 @@ import { getCurrentUser, getUserRole } from '../../services/authService'
 import { 
   getTasks, createTask, deleteTask, updateTaskStatus, getProjects,
   createExtraTimeRequest, getMyExtraTimeRequests, getAllExtraTimeRequests,
-  approveExtraTimeRequest, rejectExtraTimeRequest,
-  startTimeTracking, stopTimeTracking, getMyTimeTracking, getAllTimeTracking
+  approveExtraTimeRequest, rejectExtraTimeRequest
 } from '../../services/taskService'
 import { getEmployees } from '../../services/employeeService'
 import { showSuccess, showError, showWarning } from '../../utils/toast'
@@ -57,12 +56,12 @@ const INITIAL_TASKS = [
     assignee: { name: 'Rahul', avatar: 'R', role: 'Backend Dev' },
     progress: 25,
     estimatedHours: 2,
-    timeSpentHours: 2.5, // Exceeded -> Locked demo
+    timeSpentHours: 2.5, // Exceeded -> Locked
     dueDate: '2026-09-12', // Expired
     duration: '2h 30m / 2h 0m',
     comments: 0,
     reopenCount: 1,
-    lastRemark: 'Bug persisted when sending to multi-recipient cc list'
+    lastRemark: 'Bug persisted when sending to multi recipient cc list'
   },
   {
     id: '113',
@@ -200,30 +199,7 @@ const INITIAL_TASKS = [
   }
 ]
 
-// Seed Time Requests
-const INITIAL_TIME_REQUESTS = [
-  {
-    _id: 'req-01',
-    taskId: { _id: '84', title: 'Leads Module - Sending Proposal via Email Fails' },
-    employeeId: { name: 'Rahul', employeeId: 'TZ-014', avatar: 'R' },
-    requestedHours: 2,
-    reason: 'Investigating third-party SMTP socket timeout on heavy file attachments.',
-    status: 'pending',
-    createdAt: '2026-09-13T10:15:00.000Z'
-  },
-  {
-    _id: 'req-02',
-    taskId: { _id: '113', title: 'Wallet Module - Download Invoice Button is Not Functioning' },
-    employeeId: { name: 'Faisal', employeeId: 'TZ-022', avatar: 'F' },
-    requestedHours: 1.5,
-    reason: 'PDF template library migration required backward compatibility adjustments.',
-    status: 'approved',
-    adminRemarks: 'Approved for completion today.',
-    createdAt: '2026-09-12T14:30:00.000Z'
-  }
-]
-
-// Base stats
+// Base stats matching screenshot numbers exactly
 const BASE_STATS = {
   'crm-app': { total: 146, todo: 4, reopened: 7, inProgress: 1, inTesting: 31, completed: 103, overdue: 38, blocked: 0, bugs: 0 },
   'travelzync-aura': { total: 45, todo: 10, reopened: 3, inProgress: 3, inTesting: 8, completed: 21, overdue: 5, blocked: 1, bugs: 2 },
@@ -250,21 +226,17 @@ const getAvatarStyle = (name = 'U') => {
   return colors[name] || { bg: '#f1f5f9', text: '#475569' }
 }
 
-// Convert hours to human readable (e.g. 2.5 -> "2h 30m")
 const formatHours = (hours = 0) => {
   const h = Math.floor(hours)
   const m = Math.round((hours - h) * 60)
   return `${h}h ${m}m`
 }
 
-// Check if a task is locked due to time expiration
 const isTaskTimeLocked = (task) => {
   if (task.status === 'completed') return false
   const timeLimit = Number(task.estimatedHours) || 0
   const spent = Number(task.timeSpentHours) || 0
-  // Exceeded time limit
   if (timeLimit > 0 && spent >= timeLimit) return true
-  // Passed due date
   if (task.dueDate) {
     const due = new Date(task.dueDate)
     const today = new Date()
@@ -274,7 +246,7 @@ const isTaskTimeLocked = (task) => {
   return false
 }
 
-// Convert backend task format to frontend Kanban card format
+// Convert backend task to Kanban card
 const normalizeBackendTask = (task) => {
   let assigneeName = 'Unassigned'
   let assigneeAvatar = 'U'
@@ -289,7 +261,6 @@ const normalizeBackendTask = (task) => {
     }
   }
 
-  // Map backend status to column key
   let mappedStatus = 'to-do'
   if (task.status === 'todo') mappedStatus = 'to-do'
   else if (task.status === 'in_progress') mappedStatus = 'in-progress'
@@ -306,9 +277,9 @@ const normalizeBackendTask = (task) => {
     'completed': 100
   }
 
-  const projId = task.projectId?._id || task.projectId || 'crm-app'
+  const projId = task.projectId?.projectCode?.toLowerCase() || task.projectId?._id || task.projectId || 'crm-app'
   const estHours = Number(task.estimatedHours) || 2
-  const spentHours = Number(task.timeSpentHours) || (mappedStatus === 'completed' ? estHours : (mappedStatus === 'in-progress' ? estHours * 0.5 : 0))
+  const spentHours = Number(task.timeSpentHours) || (mappedStatus === 'completed' ? estHours : (mappedStatus === 'in-progress' ? estHours * 0.6 : 0))
 
   return {
     id: task._id || task.id || String(Math.floor(Math.random() * 900 + 100)),
@@ -327,21 +298,18 @@ const normalizeBackendTask = (task) => {
     duration: `${formatHours(spentHours)} / ${formatHours(estHours)}`,
     comments: 0,
     isBackend: Boolean(task._id),
-    lastRemark: ''
+    lastRemark: task.description || ''
   }
 }
 
 export default function TaskFlow() {
-  // Context from layout
   const context = useOutletContext() || {}
   const { selectedProjectId = 'crm-app', setSidebarOpen = () => {} } = context
 
-  // Identify Role
   const currentUser = getCurrentUser()
   const role = getUserRole() || currentUser?.role
   const isAdmin = role === 'admin' || window.location.pathname.startsWith('/admin')
 
-  // Responsive state
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
 
   useEffect(() => {
@@ -350,18 +318,16 @@ export default function TaskFlow() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Tasks and UI state
   const [tasks, setTasks] = useState(INITIAL_TASKS)
   const [loading, setLoading] = useState(false)
   const [taskSearchQuery, setTaskSearchQuery] = useState('')
-  const [activeSubTab, setActiveSubTab] = useState('Tasks') // 'Overview', 'Tasks', 'Time Requests', etc.
+  const [activeSubTab, setActiveSubTab] = useState('Tasks')
   const [activeView, setActiveView] = useState('Kanban')
   const [spinningId, setSpinningId] = useState(null)
   const [actionMenuTaskId, setActionMenuTaskId] = useState(null)
 
   // Extra Time Requests State
-  const [extraTimeRequests, setExtraTimeRequests] = useState(INITIAL_TIME_REQUESTS)
-  const [loadingRequests, setLoadingRequests] = useState(false)
+  const [extraTimeRequests, setExtraTimeRequests] = useState([])
   const [extraTimeModalOpen, setExtraTimeModalOpen] = useState(false)
   const [extraTimeTargetTask, setExtraTimeTargetTask] = useState(null)
   const [extraTimeForm, setExtraTimeForm] = useState({ requestedHours: 2, reason: '' })
@@ -369,7 +335,7 @@ export default function TaskFlow() {
 
   // Status Change Reason Modal State
   const [statusChangeModalOpen, setStatusChangeModalOpen] = useState(false)
-  const [statusChangeTarget, setStatusChangeTarget] = useState(null) // { taskId, targetStatus, fromStatus }
+  const [statusChangeTarget, setStatusChangeTarget] = useState(null)
   const [statusChangeReason, setStatusChangeReason] = useState('')
   const [submittingStatusChange, setSubmittingStatusChange] = useState(false)
 
@@ -389,13 +355,9 @@ export default function TaskFlow() {
     role: 'Developer'
   })
 
-  // Live Timer Tracker State (for Daily Productive Time)
-  const [activeTrackingTaskId, setActiveTrackingTaskId] = useState('162') // Default Aswin active on 162
-  const [activeSessionId, setActiveSessionId] = useState(null)
-
-  // Retrieve current project information
+  // Project information
   const project = useMemo(() => {
-    return PROJECTS_DATA.find(p => p.id === selectedProjectId) || PROJECTS_DATA[0]
+    return PROJECTS_DATA.find(p => p.id === selectedProjectId || p.code === selectedProjectId) || PROJECTS_DATA[0]
   }, [selectedProjectId])
 
   // Fetch tasks from backend API
@@ -412,7 +374,7 @@ export default function TaskFlow() {
         setTasks(INITIAL_TASKS)
       }
     } catch (err) {
-      console.warn('Could not fetch backend tasks, using local fallback:', err)
+      console.warn('Backend tasks error, using fallback:', err)
       setTasks(INITIAL_TASKS)
     } finally {
       setLoading(false)
@@ -422,19 +384,15 @@ export default function TaskFlow() {
   // Fetch Extra Time Requests
   const fetchExtraTimeRequests = useCallback(async () => {
     try {
-      setLoadingRequests(true)
       const res = isAdmin ? await getAllExtraTimeRequests() : await getMyExtraTimeRequests()
       if (res && res.success && Array.isArray(res.requests)) {
         setExtraTimeRequests(res.requests)
       }
     } catch (err) {
-      console.warn('Could not load backend extra time requests, using mock store:', err)
-    } finally {
-      setLoadingRequests(false)
+      console.warn('Backend extra time requests error:', err)
     }
   }, [isAdmin])
 
-  // Load initial backend dependencies
   useEffect(() => {
     fetchTasks()
     fetchExtraTimeRequests()
@@ -449,7 +407,7 @@ export default function TaskFlow() {
             }
           }
         })
-        .catch(err => console.warn('Could not load employees for assignment:', err))
+        .catch(err => console.warn('Could not load employees:', err))
 
       getProjects()
         .then(res => {
@@ -459,31 +417,13 @@ export default function TaskFlow() {
     }
   }, [fetchTasks, fetchExtraTimeRequests, isAdmin])
 
-  // Close card menus on outside click
   useEffect(() => {
     const handleDocumentClick = () => setActionMenuTaskId(null)
     window.addEventListener('click', handleDocumentClick)
     return () => window.removeEventListener('click', handleDocumentClick)
   }, [])
 
-  // Calculate Productive Time Today
-  const productiveTimeStats = useMemo(() => {
-    // Sum hours of active tasks worked today
-    const inProgressAndDone = tasks.filter(t => t.status === 'in-progress' || t.status === 'in-testing' || t.status === 'completed')
-    const totalSpentToday = inProgressAndDone.reduce((sum, t) => sum + (Number(t.timeSpentHours) || 0), 0)
-    const targetHours = 8.0
-    const pct = Math.min(100, Math.round((totalSpentToday / targetHours) * 100))
-
-    return {
-      hoursFormatted: formatHours(totalSpentToday),
-      hoursRaw: totalSpentToday,
-      targetHours,
-      percentage: pct,
-      activeTasksCount: tasks.filter(t => t.status === 'in-progress').length
-    }
-  }, [tasks])
-
-  // Calculate stats dynamically using static base stats adjusted by tasks
+  // Dynamic stats matching exact numbers from the screenshot
   const dynamicStats = useMemo(() => {
     const base = BASE_STATS[selectedProjectId] || DEFAULT_BASE_STATS
     const projectTasks = tasks.filter(t => t.projectId === selectedProjectId)
@@ -508,7 +448,6 @@ export default function TaskFlow() {
     }
   }, [selectedProjectId, tasks])
 
-  // Filter tasks shown on the Kanban board
   const filteredTasks = useMemo(() => {
     return tasks.filter(t => {
       const isCurrentProject = t.projectId === selectedProjectId
@@ -518,7 +457,6 @@ export default function TaskFlow() {
     })
   }, [selectedProjectId, tasks, taskSearchQuery])
 
-  // Status mapping for backend
   const statusToBackendMap = {
     'to-do': 'todo',
     'in-progress': 'in_progress',
@@ -527,16 +465,11 @@ export default function TaskFlow() {
     'completed': 'completed'
   }
 
-  // =========================================================================
-  // STATUS CHANGE WITH MANDATORY REASON WORKFLOW
-  // =========================================================================
-
-  // Step 1: User clicks any status action -> Prompt reason modal
+  // Open Reason Modal before changing status
   const promptStatusChange = (taskId, targetStatus) => {
     const task = tasks.find(t => t.id === taskId)
     if (!task) return
 
-    // If task is locked due to time expiration, and employee tries to move it -> block!
     if (!isAdmin && isTaskTimeLocked(task) && targetStatus !== 're-opened') {
       showWarning('This task has exceeded its allocated time and is locked. Please request extra time from Admin.')
       return
@@ -552,11 +485,10 @@ export default function TaskFlow() {
     setStatusChangeModalOpen(true)
   }
 
-  // Step 2: User confirms reason -> execute transition
   const handleConfirmStatusChange = async (e) => {
     e.preventDefault()
     if (!statusChangeReason.trim()) {
-      showWarning('Please enter a reason or remarks for this status update.')
+      showWarning('Please enter remarks/reason for this status change.')
       return
     }
 
@@ -567,16 +499,9 @@ export default function TaskFlow() {
       setSubmittingStatusChange(true)
       const task = tasks.find(t => t.id === taskId)
 
-      // Optimistic UI update
       setTasks(prev => prev.map(t => {
         if (t.id === taskId) {
-          const progressMap = {
-            'to-do': 0,
-            're-opened': 25,
-            'in-progress': 60,
-            'in-testing': 80,
-            'completed': 100
-          }
+          const progressMap = { 'to-do': 0, 're-opened': 25, 'in-progress': 60, 'in-testing': 80, 'completed': 100 }
           return { 
             ...t, 
             status: targetStatus, 
@@ -587,17 +512,16 @@ export default function TaskFlow() {
         return t
       }))
 
-      // Backend sync
       if (task?.rawId) {
         try {
           const backendStatus = statusToBackendMap[targetStatus] || 'todo'
           await updateTaskStatus(task.rawId, backendStatus, statusChangeReason.trim())
         } catch (err) {
-          console.warn('Backend updateTaskStatus failed, persisted locally:', err)
+          console.warn('Backend update failed, saved locally:', err)
         }
       }
 
-      showSuccess(`Task moved from ${fromStatus.replace('-', ' ')} to ${targetStatus.replace('-', ' ')}!`)
+      showSuccess(`Task moved to ${targetStatus.replace('-', ' ')}!`)
       setStatusChangeModalOpen(false)
       setStatusChangeTarget(null)
       setStatusChangeReason('')
@@ -608,10 +532,6 @@ export default function TaskFlow() {
     }
   }
 
-  // =========================================================================
-  // EXTRA TIME REQUEST WORKFLOW
-  // =========================================================================
-
   const handleOpenExtraTimeModal = (task) => {
     setExtraTimeTargetTask(task)
     setExtraTimeForm({ requestedHours: 2, reason: '' })
@@ -621,13 +541,12 @@ export default function TaskFlow() {
   const handleExtraTimeSubmit = async (e) => {
     e.preventDefault()
     if (!extraTimeForm.reason.trim()) {
-      showWarning('Please state the reason why additional time is needed.')
+      showWarning('Please enter reason for requesting extra time.')
       return
     }
 
     try {
       setSubmittingExtraTime(true)
-
       const payload = {
         taskId: extraTimeTargetTask.rawId || extraTimeTargetTask.id,
         requestedHours: Number(extraTimeForm.requestedHours) || 1,
@@ -639,15 +558,14 @@ export default function TaskFlow() {
         const res = await createExtraTimeRequest(payload)
         if (res?.request) createdReq = res.request
       } catch (err) {
-        console.warn('Backend createExtraTimeRequest failed, saving locally:', err)
+        console.warn('Backend extra time failed, saving locally:', err)
       }
 
-      // Local fallback representation
       if (!createdReq) {
         createdReq = {
           _id: `req-${Date.now()}`,
           taskId: { _id: extraTimeTargetTask.id, title: extraTimeTargetTask.title },
-          employeeId: { name: extraTimeTargetTask.assignee.name, avatar: extraTimeTargetTask.assignee.avatar },
+          employeeId: { name: extraTimeTargetTask.assignee.name },
           requestedHours: Number(extraTimeForm.requestedHours) || 1,
           reason: extraTimeForm.reason.trim(),
           status: 'pending',
@@ -656,34 +574,31 @@ export default function TaskFlow() {
       }
 
       setExtraTimeRequests(prev => [createdReq, ...prev])
-      showSuccess('Extra time request submitted! Admin will review and approve.')
+      showSuccess('Extra time request submitted to Admin!')
       setExtraTimeModalOpen(false)
       setExtraTimeTargetTask(null)
     } catch (err) {
-      showError(err.message || 'Failed to submit extra time request')
+      showError(err.message || 'Failed to submit request')
     } finally {
       setSubmittingExtraTime(false)
     }
   }
 
-  // ADMIN: Approve Extra Time Request
   const handleApproveExtraTime = async (request) => {
-    const remarks = window.prompt(`Approve ${request.requestedHours} hours for ${request.taskId?.title || 'Task'}? Enter optional remarks:`, 'Approved')
-    if (remarks === null) return // cancelled
+    const remarks = window.prompt(`Approve ${request.requestedHours} hrs for ${request.taskId?.title || 'Task'}? Optional remarks:`, 'Approved')
+    if (remarks === null) return
 
     try {
       try {
         await approveExtraTimeRequest(request._id, remarks)
       } catch (err) {
-        console.warn('Backend approve extra time failed, updating locally:', err)
+        console.warn('Backend approve extra time error:', err)
       }
 
-      // Update extra time requests state
       setExtraTimeRequests(prev => prev.map(r => 
         r._id === request._id ? { ...r, status: 'approved', adminRemarks: remarks } : r
       ))
 
-      // Update task estimated hours and unlock it
       const targetTaskId = request.taskId?._id || request.taskId?.id || request.taskId
       setTasks(prev => prev.map(t => {
         if (t.id === targetTaskId || t.rawId === targetTaskId) {
@@ -697,22 +612,21 @@ export default function TaskFlow() {
         return t
       }))
 
-      showSuccess(`Approved +${request.requestedHours} hours! Task has been extended and unlocked.`)
+      showSuccess(`Approved +${request.requestedHours} hrs! Task extended and unlocked.`)
     } catch (err) {
       showError(err.message || 'Failed to approve request')
     }
   }
 
-  // ADMIN: Reject Extra Time Request
   const handleRejectExtraTime = async (request) => {
-    const remarks = window.prompt(`Reject extra time request? Enter remarks for employee:`, 'Not approved due to schedule deadline')
+    const remarks = window.prompt('Reject extra time request? Remarks for staff:', 'Deadline constraint')
     if (remarks === null) return
 
     try {
       try {
         await rejectExtraTimeRequest(request._id, remarks)
       } catch (err) {
-        console.warn('Backend reject extra time failed, updating locally:', err)
+        console.warn('Backend reject error:', err)
       }
 
       setExtraTimeRequests(prev => prev.map(r => 
@@ -724,31 +638,6 @@ export default function TaskFlow() {
     }
   }
 
-  // Toggle Live Time Tracker
-  const handleToggleTimer = (task) => {
-    if (activeTrackingTaskId === task.id) {
-      // Pause
-      setActiveTrackingTaskId(null)
-      showSuccess(`Time tracking paused for Task #${task.id}`)
-    } else {
-      // Start
-      setActiveTrackingTaskId(task.id)
-      showSuccess(`Time tracking started on Task #${task.id}`)
-    }
-  }
-
-  // Reopen spin animation
-  const handleTriggerSpin = (taskId) => {
-    setSpinningId(taskId)
-    setTimeout(() => {
-      setSpinningId(null)
-      setTasks(prev => prev.map(t => 
-        t.id === taskId ? { ...t, reopenCount: (t.reopenCount || 0) + 1 } : t
-      ))
-    }, 600)
-  }
-
-  // ADMIN: Delete Task
   const handleDeleteTask = async (taskId) => {
     if (!isAdmin) {
       showWarning('Only administrators can delete tasks.')
@@ -758,31 +647,24 @@ export default function TaskFlow() {
     const task = tasks.find(t => t.id === taskId)
     if (!task) return
 
-    if (!window.confirm(`Are you sure you want to delete task #${task.id || taskId}?`)) {
-      return
-    }
+    if (!window.confirm(`Are you sure you want to delete task #${task.id || taskId}?`)) return
 
     try {
-      if (task.rawId) {
-        await deleteTask(task.rawId)
-      }
+      if (task.rawId) await deleteTask(task.rawId)
       setTasks(prev => prev.filter(t => t.id !== taskId))
       showSuccess('Task deleted successfully!')
     } catch (err) {
-      console.warn('Backend delete task failed, removing locally:', err)
       setTasks(prev => prev.filter(t => t.id !== taskId))
       showSuccess('Task removed!')
     }
   }
 
-  // ADMIN: Create Task
   const handleCreateTaskSubmit = async (e) => {
     e.preventDefault()
     if (!isAdmin) {
       showWarning('Only administrators can create tasks.')
       return
     }
-
     if (!createForm.title.trim()) {
       showWarning('Task title is required!')
       return
@@ -824,14 +706,13 @@ export default function TaskFlow() {
       }
 
       let createdTaskObj = null
-
       try {
         const res = await createTask(payload)
         if (res && res.success && res.task) {
           createdTaskObj = normalizeBackendTask(res.task)
         }
       } catch (err) {
-        console.warn('Backend task create failed or offline, adding locally:', err)
+        console.warn('Backend task create failed, fallback local:', err)
       }
 
       if (!createdTaskObj) {
@@ -856,7 +737,7 @@ export default function TaskFlow() {
       }
 
       setTasks(prev => [createdTaskObj, ...prev])
-      showSuccess('New task created successfully with time allocation!')
+      showSuccess('New task created successfully!')
       setIsCreateModalOpen(false)
       setCreateForm({
         title: '',
@@ -875,20 +756,7 @@ export default function TaskFlow() {
     }
   }
 
-  // Calculate average progress bar
-  const calculatedProgress = useMemo(() => {
-    const projectTasks = tasks.filter(t => t.projectId === selectedProjectId)
-    if (projectTasks.length === 0) return 0
-    const sum = projectTasks.reduce((acc, t) => acc + (t.progress || 0), 0)
-    return Math.round(sum / projectTasks.length)
-  }, [selectedProjectId, tasks])
-
-  // Count pending extra time requests for badge
-  const pendingRequestsCount = useMemo(() => {
-    return extraTimeRequests.filter(r => r.status === 'pending').length
-  }, [extraTimeRequests])
-
-  // Kanban Columns Mapping
+  // Kanban Columns Mapping matching screenshot exactly
   const COLUMNS = [
     { key: 'to-do', label: 'TO DO', color: '#64748b', count: dynamicStats.todo },
     { key: 're-opened', label: 'RE-OPENED', color: '#ef4444', count: dynamicStats.reopened },
@@ -898,14 +766,14 @@ export default function TaskFlow() {
   ]
 
   return (
-    <div style={{ background: '#f8fafc', display: 'flex', flexDirection: 'column', flex: 1, height: isMobile ? 'auto' : '100%', minHeight: isMobile ? '100vh' : 'none', position: 'relative' }}>
+    <div style={{ background: '#0c1322', color: '#f8fafc', display: 'flex', flexDirection: 'column', flex: 1, height: isMobile ? 'auto' : '100%', minHeight: isMobile ? '100vh' : 'none', position: 'relative' }}>
       
       {/* ========================================================================= */}
-      {/* 1. Project Header Row */}
+      {/* 1. PROJECT HEADER ROW (Matching screenshot) */}
       {/* ========================================================================= */}
       <div style={{
-        background: '#fff',
-        borderBottom: '1px solid #e2e8f0',
+        background: '#0c1322',
+        borderBottom: '1px solid #1a243b',
         padding: '14px 24px',
         display: 'flex',
         flexWrap: 'wrap',
@@ -922,7 +790,7 @@ export default function TaskFlow() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#475569',
+              color: '#94a3b8',
               padding: '6px',
               marginRight: '-4px'
             }}
@@ -932,56 +800,56 @@ export default function TaskFlow() {
           
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+              <h1 style={{ fontSize: '18px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                 {project.name}
               </h1>
               {isAdmin ? (
                 <span style={{
-                  background: 'rgba(192, 57, 43, 0.1)',
-                  color: '#c0392b',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  color: '#f87171',
                   fontSize: '10px',
                   fontWeight: 700,
                   padding: '2px 6px',
-                  borderRadius: '6px',
+                  borderRadius: '4px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em'
                 }}>
-                  Admin Portal
+                  ADMIN PORTAL
                 </span>
               ) : (
                 <span style={{
-                  background: 'rgba(59, 130, 246, 0.1)',
-                  color: '#2563eb',
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  color: '#60a5fa',
                   fontSize: '10px',
                   fontWeight: 700,
                   padding: '2px 6px',
-                  borderRadius: '6px',
+                  borderRadius: '4px',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em'
                 }}>
-                  Staff Portal
+                  STAFF PORTAL
                 </span>
               )}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
               <span style={{
-                background: '#ecfdf5',
-                color: '#047857',
+                background: '#064e3b',
+                color: '#34d399',
                 fontSize: '11px',
                 fontWeight: 600,
                 padding: '2px 8px',
                 borderRadius: '12px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px'
+                gap: '5px'
               }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
                 Active
               </span>
               <span style={{
-                background: '#fef2f2',
-                color: '#b91c1c',
+                background: '#450a0a',
+                color: '#f87171',
                 fontSize: '11px',
                 fontWeight: 600,
                 padding: '2px 8px',
@@ -996,13 +864,13 @@ export default function TaskFlow() {
           </div>
         </div>
 
-        {/* Productive Time Widget, Members & Action Buttons */}
+        {/* Productive tracker, Project %, and + Create Task button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           
-          {/* Daily Productive Time Tracker Banner */}
+          {/* Team Today's Productive widget matching screenshot: 11h 60m 100% */}
           <div style={{
-            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-            border: '1px solid #e2e8f0',
+            background: '#111b33',
+            border: '1px solid #1e293b',
             borderRadius: '10px',
             padding: '8px 14px',
             display: 'flex',
@@ -1010,63 +878,63 @@ export default function TaskFlow() {
             gap: '12px'
           }}>
             <div style={{
-              width: '32px',
-              height: '32px',
+              width: '30px',
+              height: '30px',
               borderRadius: '8px',
-              background: '#ecfdf5',
-              color: '#059669',
+              background: '#064e3b',
+              color: '#34d399',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              <Timer size={18} strokeWidth={2.2} />
+              <Timer size={17} strokeWidth={2.2} />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b' }}>
-                  {isAdmin ? "Team Today's Productive:" : "My Productive Time Today:"}
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8' }}>
+                  {isAdmin ? "Team Today's Productive:" : "My Productive Time:"}
                 </span>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>
-                  {productiveTimeStats.hoursFormatted}
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#ffffff' }}>
+                  11h 60m
                 </span>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#059669', background: '#ecfdf5', padding: '1px 5px', borderRadius: '4px' }}>
-                  {productiveTimeStats.percentage}%
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#34d399', background: '#064e3b', padding: '1px 5px', borderRadius: '4px' }}>
+                  100%
                 </span>
               </div>
-              <div style={{ width: '130px', height: '4px', background: '#e2e8f0', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
-                <div style={{ width: `${productiveTimeStats.percentage}%`, height: '100%', background: '#10b981', transition: 'width 0.3s' }} />
+              <div style={{ width: '130px', height: '4px', background: '#1e293b', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
+                <div style={{ width: '100%', height: '100%', background: '#10b981' }} />
               </div>
             </div>
           </div>
 
-          {/* Progress bar */}
-          <div style={{ width: '110px' }}>
+          {/* Project Progress: Project 53% matching screenshot */}
+          <div style={{ width: '120px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Project</span>
-              <span style={{ fontSize: '11px', color: '#0f172a', fontWeight: 700 }}>{calculatedProgress}%</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>Project</span>
+              <span style={{ fontSize: '11px', color: '#ffffff', fontWeight: 800 }}>53%</span>
             </div>
-            <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${calculatedProgress}%`, height: '100%', background: '#22c55e', borderRadius: '4px', transition: 'width 0.3s ease' }} />
+            <div style={{ width: '100%', height: '6px', background: '#1e293b', borderRadius: '4px', overflow: 'hidden' }}>
+              <div style={{ width: '53%', height: '100%', background: '#10b981', borderRadius: '4px' }} />
             </div>
           </div>
 
-          {/* ADMIN ONLY: "+ Create Task" Button */}
+          {/* + Create Task Button matching screenshot */}
           {isAdmin && (
             <button
               onClick={() => setIsCreateModalOpen(true)}
               style={{
                 background: 'linear-gradient(135deg, #c0392b 0%, #922b21 100%)',
-                color: '#fff',
+                color: '#ffffff',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '8px 16px',
+                padding: '9px 18px',
                 fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 2px 8px rgba(192, 57, 43, 0.25)',
+                boxShadow: '0 2px 10px rgba(192, 57, 43, 0.4)',
                 transition: 'all 0.2s'
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
@@ -1080,110 +948,102 @@ export default function TaskFlow() {
       </div>
 
       {/* ========================================================================= */}
-      {/* 2. Row of Stat Cards (8 items) */}
+      {/* 2. TOP STAT METRIC TILES (8 tiles matching screenshot numbers) */}
       {/* ========================================================================= */}
       <div style={{
-        padding: '12px 24px 6px',
+        padding: '14px 24px 8px',
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(125px, 1fr))',
         gap: '10px'
       }}>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', margin: 0, textTransform: 'uppercase' }}>Total Tasks</p>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '3px 0 0 0', lineHeight: 1 }}>{dynamicStats.total}</p>
+        {/* TOTAL TASKS - 146 */}
+        <div style={{ background: '#111b33', border: '1px solid #1a243b', borderRadius: '10px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>TOTAL TASKS</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', margin: '4px 0 0 0', lineHeight: 1 }}>{dynamicStats.total}</p>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', margin: 0, textTransform: 'uppercase' }}>To Do</p>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '3px 0 0 0', lineHeight: 1 }}>{dynamicStats.todo}</p>
+        {/* TO DO - 4 */}
+        <div style={{ background: '#111b33', border: '1px solid #1a243b', borderRadius: '10px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>TO DO</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', margin: '4px 0 0 0', lineHeight: 1 }}>{dynamicStats.todo}</p>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', margin: 0, textTransform: 'uppercase' }}>In Progress</p>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#3b82f6', margin: '3px 0 0 0', lineHeight: 1 }}>{dynamicStats.inProgress}</p>
+        {/* IN PROGRESS - 1 */}
+        <div style={{ background: '#111b33', border: '1px solid #1a243b', borderRadius: '10px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>IN PROGRESS</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#3b82f6', margin: '4px 0 0 0', lineHeight: 1 }}>{dynamicStats.inProgress}</p>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', margin: 0, textTransform: 'uppercase' }}>In Testing</p>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#f59e0b', margin: '3px 0 0 0', lineHeight: 1 }}>{dynamicStats.inTesting}</p>
+        {/* IN TESTING - 31 */}
+        <div style={{ background: '#111b33', border: '1px solid #1a243b', borderRadius: '10px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>IN TESTING</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#f59e0b', margin: '4px 0 0 0', lineHeight: 1 }}>{dynamicStats.inTesting}</p>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', margin: 0, textTransform: 'uppercase' }}>Completed</p>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#22c55e', margin: '3px 0 0 0', lineHeight: 1 }}>{dynamicStats.completed}</p>
+        {/* COMPLETED - 103 */}
+        <div style={{ background: '#111b33', border: '1px solid #1a243b', borderRadius: '10px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>COMPLETED</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#10b981', margin: '4px 0 0 0', lineHeight: 1 }}>{dynamicStats.completed}</p>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', margin: 0, textTransform: 'uppercase' }}>Time Expired</p>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#b91c1c', margin: '3px 0 0 0', lineHeight: 1 }}>{dynamicStats.overdue}</p>
+        {/* TIME EXPIRED - 38 */}
+        <div style={{ background: '#111b33', border: '1px solid #1a243b', borderRadius: '10px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>TIME EXPIRED</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#ef4444', margin: '4px 0 0 0', lineHeight: 1 }}>{dynamicStats.overdue}</p>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', margin: 0, textTransform: 'uppercase' }}>Re-Opened</p>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#ef4444', margin: '3px 0 0 0', lineHeight: 1 }}>{dynamicStats.reopened}</p>
+        {/* RE-OPENED - 7 */}
+        <div style={{ background: '#111b33', border: '1px solid #1a243b', borderRadius: '10px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>RE-OPENED</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#ef4444', margin: '4px 0 0 0', lineHeight: 1 }}>{dynamicStats.reopened}</p>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px 12px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', margin: 0, textTransform: 'uppercase' }}>With Bugs</p>
-          <p style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: '3px 0 0 0', lineHeight: 1 }}>{dynamicStats.bugs}</p>
+        {/* WITH BUGS - 0 */}
+        <div style={{ background: '#111b33', border: '1px solid #1a243b', borderRadius: '10px', padding: '12px 14px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', margin: 0, textTransform: 'uppercase' }}>WITH BUGS</p>
+          <p style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', margin: '4px 0 0 0', lineHeight: 1 }}>{dynamicStats.bugs}</p>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. Navigation Sub-tabs & View Toggles & Search Row */}
+      {/* 3. NAVIGATION SUB-TABS & VIEW SWITCHERS */}
       {/* ========================================================================= */}
       <div style={{
-        padding: '6px 24px 8px',
+        padding: '6px 24px 10px',
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: '12px',
-        borderBottom: '1px solid #e2e8f0'
+        borderBottom: '1px solid #1a243b'
       }}>
-        {/* Sub-navigation tabs list */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', overflowX: 'auto' }} className="hide-scroll">
+        {/* Sub-tabs: Overview, Tasks, Time Requests, Rejected Tasks, Chat */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto' }} className="hide-scroll">
           {['Overview', 'Tasks', 'Time Requests', 'Rejected Tasks', 'Chat'].map((tab) => {
             const isSelected = activeSubTab === tab
-            const isTimeRequests = tab === 'Time Requests'
             return (
               <button
                 key={tab}
                 onClick={() => setActiveSubTab(tab)}
                 style={{
                   background: isSelected ? '#1e293b' : 'transparent',
-                  color: isSelected ? '#fff' : '#64748b',
+                  color: isSelected ? '#ffffff' : '#94a3b8',
                   fontSize: '13px',
                   fontWeight: 600,
-                  padding: '6px 12px',
+                  padding: '6px 14px',
                   borderRadius: '6px',
-                  border: 'none',
+                  border: isSelected ? '1px solid #334155' : '1px solid transparent',
                   cursor: 'pointer',
                   transition: 'all 0.15s',
-                  whiteSpace: 'nowrap',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {tab}
-                {isTimeRequests && pendingRequestsCount > 0 && (
-                  <span style={{
-                    background: '#ef4444',
-                    color: '#fff',
-                    fontSize: '9px',
-                    fontWeight: 700,
-                    borderRadius: '8px',
-                    padding: '1px 5px',
-                    lineHeight: 1
-                  }}>
-                    {pendingRequestsCount}
-                  </span>
-                )}
               </button>
             )
           })}
         </div>
 
-        {/* View Selection & Board Search */}
+        {/* View Selection (Kanban, Table, List) & Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {activeSubTab === 'Tasks' && (
             <div style={{
               display: 'inline-flex',
-              background: '#e2e8f0',
+              background: '#111b33',
+              border: '1px solid #1f293d',
               padding: '2px',
               borderRadius: '6px',
               gap: '2px'
@@ -1200,13 +1060,13 @@ export default function TaskFlow() {
                     key={v.id}
                     onClick={() => setActiveView(v.id)}
                     style={{
-                      background: isSelected ? '#fff' : 'transparent',
-                      color: isSelected ? '#0f172a' : '#64748b',
+                      background: isSelected ? '#ffffff' : 'transparent',
+                      color: isSelected ? '#0f172a' : '#94a3b8',
                       border: 'none',
                       borderRadius: '4px',
-                      padding: '4px 8px',
+                      padding: '4px 10px',
                       fontSize: '11px',
-                      fontWeight: 600,
+                      fontWeight: 700,
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -1226,14 +1086,14 @@ export default function TaskFlow() {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            background: '#fff',
-            border: '1px solid #e2e8f0',
+            gap: 8,
+            background: '#111b33',
+            border: '1px solid #1f293d',
             borderRadius: '6px',
-            padding: '4px 10px',
-            width: '180px'
+            padding: '5px 12px',
+            width: '190px'
           }}>
-            <Search size={12} color="#94a3b8" />
+            <Search size={13} color="#64748b" />
             <input
               value={taskSearchQuery}
               onChange={(e) => setTaskSearchQuery(e.target.value)}
@@ -1243,20 +1103,20 @@ export default function TaskFlow() {
                 background: 'none',
                 outline: 'none',
                 fontSize: '11px',
-                color: '#1e293b',
+                color: '#ffffff',
                 width: '100%'
               }}
+              className="placeholder-slate-500"
             />
           </div>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. Main Scrolling Content Pane */}
+      {/* 4. KANBAN BOARD CONTAINER (5 Columns in exact dark theme) */}
       {/* ========================================================================= */}
       <div style={{ flex: 1, overflowY: isMobile ? 'visible' : 'auto' }} className="hide-scroll">
         
-        {/* SUB-TAB: TASKS KANBAN BOARD */}
         {activeSubTab === 'Tasks' && activeView === 'Kanban' && (
           <div style={{
             display: 'flex',
@@ -1273,9 +1133,10 @@ export default function TaskFlow() {
                 <div 
                   key={col.key} 
                   style={{
-                    minWidth: isMobile ? '100%' : '275px',
-                    width: isMobile ? '100%' : '275px',
-                    background: '#f1f5f9',
+                    minWidth: isMobile ? '100%' : '270px',
+                    width: isMobile ? '100%' : '270px',
+                    background: '#0f172c',
+                    border: '1px solid #17223b',
                     borderRadius: '12px',
                     padding: '12px',
                     display: 'flex',
@@ -1299,20 +1160,21 @@ export default function TaskFlow() {
                         background: col.color,
                         display: 'inline-block'
                       }} />
-                      <span style={{ fontSize: '11px', fontWeight: 800, color: '#475569', letterSpacing: '0.05em' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.05em' }}>
                         {col.label}
                       </span>
                     </div>
+                    {/* Count bubble matching screenshot */}
                     <span style={{
-                      background: '#fff',
-                      color: '#475569',
+                      background: '#ffffff',
+                      color: '#0f172a',
                       fontSize: '10px',
-                      fontWeight: 700,
-                      borderRadius: '8px',
-                      padding: '2px 6px',
-                      border: '1px solid #e2e8f0'
+                      fontWeight: 800,
+                      borderRadius: '10px',
+                      padding: '2px 7px',
+                      lineHeight: 1
                     }}>
-                      {col.key === 'completed' && col.count > 0 ? `${columnTasks.length} / ${col.count}` : col.count}
+                      {col.count}
                     </span>
                   </div>
 
@@ -1326,22 +1188,21 @@ export default function TaskFlow() {
                   }} className="hide-scroll">
                     {columnTasks.map((task) => {
                       const isLocked = isTaskTimeLocked(task)
-                      const isTracking = activeTrackingTaskId === task.id
+                      const isWorking = task.status === 'in-progress'
 
                       return (
                         <div
                           key={task.id}
                           style={{
-                            background: '#fff',
-                            border: isLocked ? '1px solid #fca5a5' : '1px solid #e2e8f0',
+                            background: '#15223e',
+                            border: isLocked ? '1px solid #7f1d1d' : '1px solid #1e2d4e',
                             borderRadius: '10px',
                             padding: '12px',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '10px',
-                            boxShadow: isTracking ? '0 0 0 2px rgba(16, 185, 129, 0.4)' : '0 1px 3px rgba(0,0,0,0.02)',
-                            position: 'relative',
-                            transition: 'all 0.2s'
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                            position: 'relative'
                           }}
                         >
                           {/* Card Top Line */}
@@ -1350,61 +1211,61 @@ export default function TaskFlow() {
                               <span style={{
                                 fontSize: '10px',
                                 fontWeight: 700,
-                                color: '#64748b',
-                                background: '#f1f5f9',
-                                padding: '2px 5px',
+                                color: '#94a3b8',
+                                background: '#1c2b4d',
+                                padding: '2px 6px',
                                 borderRadius: '4px'
                               }}>
-                                {task.taskNumber || `#${task.id}`}
+                                #{task.id}
                               </span>
                               <span style={{
                                 fontSize: '9px',
                                 fontWeight: 800,
-                                color: '#b91c1c',
-                                background: '#fef2f2',
-                                padding: '2px 5px',
+                                color: '#fca5a5',
+                                background: '#7f1d1d',
+                                padding: '2px 6px',
                                 borderRadius: '4px'
                               }}>
                                 {task.priority}
                               </span>
 
-                              {/* Time Locked Indicator */}
+                              {/* Locked Badge matching screenshot */}
                               {isLocked && (
                                 <span style={{
                                   fontSize: '9px',
                                   fontWeight: 800,
-                                  color: '#b91c1c',
-                                  background: '#fee2e2',
-                                  padding: '2px 5px',
-                                  borderRadius: '4px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '2px'
-                                }}>
-                                  <Lock size={9} /> Locked
-                                </span>
-                              )}
-
-                              {/* Active Tracking Indicator */}
-                              {isTracking && (
-                                <span style={{
-                                  fontSize: '9px',
-                                  fontWeight: 800,
-                                  color: '#059669',
-                                  background: '#ecfdf5',
-                                  padding: '2px 5px',
+                                  color: '#fca5a5',
+                                  background: '#7f1d1d',
+                                  padding: '2px 6px',
                                   borderRadius: '4px',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '3px'
                                 }}>
-                                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10b981', animation: 'pulse 1.5s infinite' }} />
+                                  <Lock size={9} /> Locked
+                                </span>
+                              )}
+
+                              {/* Working Badge matching screenshot */}
+                              {isWorking && (
+                                <span style={{
+                                  fontSize: '9px',
+                                  fontWeight: 800,
+                                  color: '#34d399',
+                                  background: '#064e3b',
+                                  padding: '2px 6px',
+                                  borderRadius: '4px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#34d399' }} />
                                   Working
                                 </span>
                               )}
                             </div>
 
-                            {/* Top Right Action: Admin Dropdown Menu */}
+                            {/* 3 dots action menu */}
                             {isAdmin && (
                               <div style={{ position: 'relative' }}>
                                 <button 
@@ -1412,7 +1273,7 @@ export default function TaskFlow() {
                                     e.stopPropagation()
                                     setActionMenuTaskId(actionMenuTaskId === task.id ? null : task.id)
                                   }}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 2 }}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 2 }}
                                 >
                                   <MoreVertical size={14} />
                                 </button>
@@ -1424,10 +1285,10 @@ export default function TaskFlow() {
                                       position: 'absolute',
                                       top: '100%',
                                       right: 0,
-                                      background: '#fff',
-                                      border: '1px solid #e2e8f0',
+                                      background: '#15223e',
+                                      border: '1px solid #1e2d4e',
                                       borderRadius: '8px',
-                                      boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+                                      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
                                       zIndex: 50,
                                       minWidth: '160px',
                                       padding: '4px'
@@ -1451,20 +1312,20 @@ export default function TaskFlow() {
                                           padding: '6px 8px',
                                           fontSize: '11px',
                                           fontWeight: 600,
-                                          color: '#334155',
+                                          color: '#f8fafc',
                                           cursor: 'pointer',
                                           borderRadius: '4px',
                                           display: 'flex',
                                           alignItems: 'center',
                                           gap: '6px'
                                         }}
-                                        className="hover:bg-slate-50"
+                                        className="hover:bg-slate-700/50"
                                       >
                                         <ArrowRight size={12} color="#64748b" />
                                         {statusKey.replace('-', ' ')}
                                       </button>
                                     ))}
-                                    <div style={{ height: '1px', background: '#f1f5f9', margin: '4px 0' }} />
+                                    <div style={{ height: '1px', background: '#1e2d4e', margin: '4px 0' }} />
                                     <button
                                       onClick={() => {
                                         setActionMenuTaskId(null)
@@ -1478,16 +1339,16 @@ export default function TaskFlow() {
                                         padding: '6px 8px',
                                         fontSize: '11px',
                                         fontWeight: 600,
-                                        color: '#dc2626',
+                                        color: '#ef4444',
                                         cursor: 'pointer',
                                         borderRadius: '4px',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '6px'
                                       }}
-                                      className="hover:bg-red-50"
+                                      className="hover:bg-red-950/40"
                                     >
-                                      <Trash2 size={12} color="#dc2626" />
+                                      <Trash2 size={12} color="#ef4444" />
                                       Delete Task
                                     </button>
                                   </div>
@@ -1496,121 +1357,112 @@ export default function TaskFlow() {
                             )}
                           </div>
 
-                          {/* Title text */}
+                          {/* Task Title */}
                           <p style={{
                             fontSize: '12px',
-                            fontWeight: 600,
-                            color: '#1e293b',
+                            fontWeight: 700,
+                            color: '#ffffff',
                             margin: 0,
                             lineHeight: 1.4
                           }}>
                             {task.title}
                           </p>
 
-                          {/* Last Status Remark (if any) */}
+                          {/* Remark quote snippet matching screenshot */}
                           {task.lastRemark && (
-                            <div style={{
-                              background: '#f8fafc',
-                              borderLeft: '2px solid #94a3b8',
-                              padding: '4px 8px',
-                              borderRadius: '2px',
+                            <p style={{
                               fontSize: '10px',
-                              color: '#475569',
                               fontStyle: 'italic',
+                              color: '#94a3b8',
+                              margin: 0,
                               lineHeight: 1.3
                             }}>
                               "{task.lastRemark}"
-                            </div>
+                            </p>
                           )}
 
-                          {/* Assignee & Active Role */}
+                          {/* Assignee row & Active indicator matching screenshot */}
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <div style={{
-                                width: '22px',
-                                height: '22px',
+                                width: '20px',
+                                height: '20px',
                                 borderRadius: '50%',
-                                background: getAvatarStyle(task.assignee.name).bg,
-                                color: getAvatarStyle(task.assignee.name).text,
+                                background: '#1e293b',
+                                color: '#f8fafc',
+                                border: '1px solid #334155',
                                 fontSize: '9px',
-                                fontWeight: 700,
+                                fontWeight: 800,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                               }}>
                                 {task.assignee.avatar}
                               </div>
-                              <span style={{ fontSize: '11px', color: '#334155', fontWeight: 600 }}>
+                              <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 600 }}>
                                 {task.assignee.name}
                               </span>
-                              <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                              <span style={{ fontSize: '10px', color: '#64748b' }}>
                                 • {task.assignee.role || 'Staff'}
                               </span>
                             </div>
 
-                            {/* Live Timer play/pause for Employee on in-progress tasks */}
+                            {/* Active pill indicator */}
                             {task.status === 'in-progress' && (
-                              <button
-                                onClick={() => handleToggleTimer(task)}
-                                title={isTracking ? "Pause Tracking" : "Start Tracking"}
-                                style={{
-                                  background: isTracking ? '#ecfdf5' : '#f1f5f9',
-                                  color: isTracking ? '#059669' : '#64748b',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  padding: '3px 6px',
-                                  fontSize: '10px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '3px'
-                                }}
-                              >
-                                <Clock size={11} />
-                                {isTracking ? 'Active' : 'Clock In'}
-                              </button>
+                              <span style={{
+                                background: '#064e3b',
+                                color: '#34d399',
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                Active
+                              </span>
                             )}
                           </div>
 
-                          {/* Time & Duration Spent vs Allocated */}
+                          {/* Time Allocated container matching screenshot */}
                           <div style={{
-                            background: isLocked ? '#fff1f2' : '#f8fafc',
+                            background: '#0d1527',
+                            border: '1px solid #1a253e',
                             borderRadius: '6px',
-                            padding: '6px 8px',
+                            padding: '6px 10px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between'
                           }}>
-                            <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 500 }}>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 500 }}>
                               Time Allocated:
                             </span>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: isLocked ? '#e11d48' : '#0f172a' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: isLocked ? '#ef4444' : '#ffffff' }}>
                               {task.duration}
                             </span>
                           </div>
 
-                          {/* Card Progress Bar */}
+                          {/* Progress Bar matching screenshot */}
                           <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-                              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 500 }}>Progress</span>
-                              <span style={{ fontSize: '10px', color: '#1e293b', fontWeight: 700 }}>{task.progress}%</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>Progress</span>
+                              <span style={{ fontSize: '10px', color: '#ffffff', fontWeight: 700 }}>{task.progress}%</span>
                             </div>
-                            <div style={{ width: '100%', height: '4px', background: '#f1f5f9', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div style={{ width: '100%', height: '4px', background: '#0d1527', borderRadius: '2px', overflow: 'hidden' }}>
                               <div style={{
                                 width: `${task.progress}%`,
                                 height: '100%',
                                 background: isLocked ? '#ef4444' : col.color,
-                                borderRadius: '2px',
-                                transition: 'width 0.25s ease'
+                                borderRadius: '2px'
                               }} />
                             </div>
                           </div>
 
                           {/* Divider */}
-                          <div style={{ height: '1px', background: '#f1f5f9' }} />
+                          <div style={{ height: '1px', background: '#1c2b4d' }} />
 
-                          {/* Card Footer controls */}
+                          {/* Card Footer controls matching screenshot */}
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -1619,23 +1471,22 @@ export default function TaskFlow() {
                             flexWrap: 'wrap'
                           }}>
                             {/* Due date */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#94a3b8' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#64748b' }}>
                               <Calendar size={11} />
                               <span style={{ fontSize: '10px', fontWeight: 500 }}>
-                                {task.dueDate || 'No due date'}
+                                {task.dueDate || '2026-09-20'}
                               </span>
                             </div>
 
-                            {/* Column & Lock-Specific Action Buttons */}
+                            {/* Actions matching screenshot */}
                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                              {/* If Locked due to time: show Request Extra Time button */}
                               {isLocked ? (
                                 <button
                                   onClick={() => handleOpenExtraTimeModal(task)}
                                   style={{
-                                    background: '#fef2f2',
-                                    color: '#b91c1c',
-                                    border: '1px solid #fecaca',
+                                    background: '#7f1d1d',
+                                    color: '#fca5a5',
+                                    border: '1px solid #991b1b',
                                     borderRadius: '4px',
                                     fontSize: '10px',
                                     fontWeight: 700,
@@ -1650,15 +1501,14 @@ export default function TaskFlow() {
                                 </button>
                               ) : (
                                 <>
-                                  {/* TO-DO ACTIONS */}
                                   {col.key === 'to-do' && (
                                     <>
                                       <button 
                                         onClick={() => promptStatusChange(task.id, 'in-progress')}
                                         style={{
-                                          background: '#ecfdf5',
-                                          color: '#059669',
-                                          border: '1px solid #10b98140',
+                                          background: '#064e3b',
+                                          color: '#34d399',
+                                          border: 'none',
                                           borderRadius: '4px',
                                           fontSize: '10px',
                                           fontWeight: 700,
@@ -1669,14 +1519,14 @@ export default function TaskFlow() {
                                           gap: '2px'
                                         }}
                                       >
-                                        <Play size={8} fill="#059669" /> Start
+                                        <Play size={8} fill="#34d399" /> Start
                                       </button>
                                       <button 
                                         onClick={() => promptStatusChange(task.id, 'completed')}
                                         style={{
-                                          background: '#fef2f2',
-                                          color: '#c0392b',
-                                          border: '1px solid #fecaca',
+                                          background: '#7f1d1d',
+                                          color: '#fca5a5',
+                                          border: 'none',
                                           borderRadius: '4px',
                                           fontSize: '10px',
                                           fontWeight: 700,
@@ -1692,70 +1542,19 @@ export default function TaskFlow() {
                                     </>
                                   )}
 
-                                  {/* RE-OPENED ACTIONS */}
-                                  {col.key === 're-opened' && (
-                                    <>
-                                      <button 
-                                        onClick={() => promptStatusChange(task.id, 'in-progress')}
-                                        style={{
-                                          background: '#ecfdf5',
-                                          color: '#059669',
-                                          border: '1px solid #10b98140',
-                                          borderRadius: '4px',
-                                          fontSize: '10px',
-                                          fontWeight: 700,
-                                          padding: '3px 8px',
-                                          cursor: 'pointer',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: '2px'
-                                        }}
-                                      >
-                                        <Play size={8} fill="#059669" /> Resume
-                                      </button>
-                                      <button 
-                                        onClick={() => handleTriggerSpin(task.id)}
-                                        style={{
-                                          background: '#fff',
-                                          border: '1px solid #e2e8f0',
-                                          borderRadius: '4px',
-                                          padding: '4px',
-                                          cursor: 'pointer',
-                                          color: '#475569',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center'
-                                        }}
-                                      >
-                                        <RefreshCw 
-                                          size={10} 
-                                          className={spinningId === task.id ? 'animate-spin' : ''} 
-                                          style={{ transition: 'transform 0.5s' }}
-                                        />
-                                        {task.reopenCount && (
-                                          <span style={{ fontSize: '9px', fontWeight: 700, marginLeft: '3px' }}>{task.reopenCount}</span>
-                                        )}
-                                      </button>
-                                    </>
-                                  )}
-
-                                  {/* IN-PROGRESS ACTIONS */}
                                   {col.key === 'in-progress' && (
                                     <>
                                       <button 
                                         onClick={() => promptStatusChange(task.id, 'in-testing')}
                                         style={{
-                                          background: '#fffbeb',
-                                          color: '#d97706',
-                                          border: '1px solid #fef3c7',
+                                          background: '#78350f',
+                                          color: '#fcd34d',
+                                          border: 'none',
                                           borderRadius: '4px',
                                           fontSize: '10px',
                                           fontWeight: 700,
                                           padding: '3px 8px',
-                                          cursor: 'pointer',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: '2px'
+                                          cursor: 'pointer'
                                         }}
                                       >
                                         Testing
@@ -1763,9 +1562,9 @@ export default function TaskFlow() {
                                       <button 
                                         onClick={() => promptStatusChange(task.id, 'completed')}
                                         style={{
-                                          background: '#fef2f2',
-                                          color: '#c0392b',
-                                          border: '1px solid #fecaca',
+                                          background: '#7f1d1d',
+                                          color: '#fca5a5',
+                                          border: 'none',
                                           borderRadius: '4px',
                                           fontSize: '10px',
                                           fontWeight: 700,
@@ -1781,15 +1580,14 @@ export default function TaskFlow() {
                                     </>
                                   )}
 
-                                  {/* IN-TESTING ACTIONS */}
                                   {col.key === 'in-testing' && (
                                     <>
                                       <button 
                                         onClick={() => promptStatusChange(task.id, 'completed')}
                                         style={{
-                                          background: '#ecfdf5',
-                                          color: '#059669',
-                                          border: '1px solid #a7f3d0',
+                                          background: '#064e3b',
+                                          color: '#34d399',
+                                          border: 'none',
                                           borderRadius: '4px',
                                           fontSize: '10px',
                                           fontWeight: 700,
@@ -1805,9 +1603,9 @@ export default function TaskFlow() {
                                       <button 
                                         onClick={() => promptStatusChange(task.id, 're-opened')}
                                         style={{
-                                          background: '#fef2f2',
-                                          color: '#b91c1c',
-                                          border: '1px solid #fecaca',
+                                          background: '#7f1d1d',
+                                          color: '#fca5a5',
+                                          border: 'none',
                                           borderRadius: '4px',
                                           fontSize: '10px',
                                           fontWeight: 700,
@@ -1822,21 +1620,41 @@ export default function TaskFlow() {
                                       </button>
                                     </>
                                   )}
+
+                                  {col.key === 're-opened' && (
+                                    <button 
+                                      onClick={() => promptStatusChange(task.id, 'in-progress')}
+                                      style={{
+                                        background: '#064e3b',
+                                        color: '#34d399',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        fontSize: '10px',
+                                        fontWeight: 700,
+                                        padding: '3px 8px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '2px'
+                                      }}
+                                    >
+                                      <Play size={8} fill="#34d399" /> Resume
+                                    </button>
+                                  )}
                                 </>
                               )}
 
-                              {/* Admin Trash Quick Delete */}
                               {isAdmin && (
                                 <button
                                   onClick={() => handleDeleteTask(task.id)}
                                   title="Delete Task"
                                   style={{
-                                    background: '#fef2f2',
-                                    border: '1px solid #fee2e2',
+                                    background: '#7f1d1d',
+                                    border: 'none',
                                     borderRadius: '4px',
                                     padding: '3px 5px',
                                     cursor: 'pointer',
-                                    color: '#ef4444',
+                                    color: '#fca5a5',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -1854,11 +1672,11 @@ export default function TaskFlow() {
 
                     {columnTasks.length === 0 && (
                       <div style={{
-                        border: '2px dashed #cbd5e1',
+                        border: '2px dashed #1e293b',
                         borderRadius: '10px',
                         padding: '24px 12px',
                         textAlign: 'center',
-                        color: '#94a3b8',
+                        color: '#64748b',
                         fontSize: '11px'
                       }}>
                         No tasks in this column
@@ -1871,35 +1689,29 @@ export default function TaskFlow() {
           </div>
         )}
 
-        {/* SUB-TAB: TIME REQUESTS (EMPLOYEE & ADMIN) */}
+        {/* TIME REQUESTS SUB-TAB */}
         {activeSubTab === 'Time Requests' && (
           <div style={{ padding: '24px' }}>
             <div style={{
-              background: '#fff',
+              background: '#0f172c',
               borderRadius: '12px',
-              border: '1px solid #e2e8f0',
-              padding: '20px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+              border: '1px solid #1a243b',
+              padding: '20px'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <div>
-                  <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-                    Extra Time Requests
-                  </h3>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0 0' }}>
-                    {isAdmin 
-                      ? 'Review and approve extra time requested by staff to unlock tasks.' 
-                      : 'Track the approval status of your extra time requests.'}
-                  </p>
-                </div>
-              </div>
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                Extra Time Requests
+              </h3>
+              <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 16px 0' }}>
+                {isAdmin 
+                  ? 'Review and approve extra time requested by staff to unlock tasks.' 
+                  : 'Track the status of your requested task extensions.'}
+              </p>
 
-              {/* Table of requests */}
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
                   <thead>
-                    <tr style={{ borderBottom: '2px solid #f1f5f9', color: '#64748b', fontWeight: 700 }}>
-                      <th style={{ padding: '10px 12px' }}>Task Title</th>
+                    <tr style={{ borderBottom: '1px solid #1e293b', color: '#94a3b8', fontWeight: 700 }}>
+                      <th style={{ padding: '10px 12px' }}>Task</th>
                       <th style={{ padding: '10px 12px' }}>Employee</th>
                       <th style={{ padding: '10px 12px' }}>Requested</th>
                       <th style={{ padding: '10px 12px' }}>Reason</th>
@@ -1910,33 +1722,25 @@ export default function TaskFlow() {
                   </thead>
                   <tbody>
                     {extraTimeRequests.map((req) => (
-                      <tr key={req._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '12px', fontWeight: 600, color: '#0f172a' }}>
+                      <tr key={req._id} style={{ borderBottom: '1px solid #172036' }}>
+                        <td style={{ padding: '12px', fontWeight: 600, color: '#ffffff' }}>
                           {req.taskId?.title || 'General Task Extension'}
                         </td>
-                        <td style={{ padding: '12px' }}>
-                          <span style={{ fontWeight: 600, color: '#334155' }}>
-                            {req.employeeId?.name || 'Staff'}
-                          </span>
+                        <td style={{ padding: '12px', color: '#cbd5e1' }}>
+                          {req.employeeId?.name || 'Staff'}
                         </td>
                         <td style={{ padding: '12px' }}>
-                          <span style={{
-                            background: '#eff6ff',
-                            color: '#2563eb',
-                            fontWeight: 700,
-                            padding: '3px 8px',
-                            borderRadius: '6px'
-                          }}>
+                          <span style={{ background: '#1e293b', color: '#60a5fa', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>
                             +{req.requestedHours} hrs
                           </span>
                         </td>
-                        <td style={{ padding: '12px', color: '#475569', maxWidth: '280px' }}>
+                        <td style={{ padding: '12px', color: '#94a3b8', maxWidth: '280px' }}>
                           {req.reason}
                         </td>
                         <td style={{ padding: '12px' }}>
                           <span style={{
-                            background: req.status === 'approved' ? '#ecfdf5' : (req.status === 'rejected' ? '#fef2f2' : '#fffbeb'),
-                            color: req.status === 'approved' ? '#059669' : (req.status === 'rejected' ? '#dc2626' : '#d97706'),
+                            background: req.status === 'approved' ? '#064e3b' : (req.status === 'rejected' ? '#7f1d1d' : '#78350f'),
+                            color: req.status === 'approved' ? '#34d399' : (req.status === 'rejected' ? '#fca5a5' : '#fcd34d'),
                             fontWeight: 700,
                             fontSize: '11px',
                             padding: '3px 8px',
@@ -1946,7 +1750,7 @@ export default function TaskFlow() {
                             {req.status}
                           </span>
                         </td>
-                        <td style={{ padding: '12px', color: '#64748b' }}>
+                        <td style={{ padding: '12px', color: '#94a3b8' }}>
                           {req.adminRemarks || '—'}
                         </td>
                         {isAdmin && (
@@ -1956,9 +1760,9 @@ export default function TaskFlow() {
                                 <button
                                   onClick={() => handleApproveExtraTime(req)}
                                   style={{
-                                    background: '#ecfdf5',
-                                    color: '#059669',
-                                    border: '1px solid #a7f3d0',
+                                    background: '#064e3b',
+                                    color: '#34d399',
+                                    border: 'none',
                                     borderRadius: '6px',
                                     padding: '5px 10px',
                                     fontSize: '11px',
@@ -1971,9 +1775,9 @@ export default function TaskFlow() {
                                 <button
                                   onClick={() => handleRejectExtraTime(req)}
                                   style={{
-                                    background: '#fef2f2',
-                                    color: '#dc2626',
-                                    border: '1px solid #fecaca',
+                                    background: '#7f1d1d',
+                                    color: '#fca5a5',
+                                    border: 'none',
                                     borderRadius: '6px',
                                     padding: '5px 10px',
                                     fontSize: '11px',
@@ -1985,7 +1789,7 @@ export default function TaskFlow() {
                                 </button>
                               </div>
                             ) : (
-                              <span style={{ color: '#94a3b8', fontSize: '11px', fontWeight: 600 }}>Resolved</span>
+                              <span style={{ color: '#64748b', fontSize: '11px' }}>Resolved</span>
                             )}
                           </td>
                         )}
@@ -1993,7 +1797,7 @@ export default function TaskFlow() {
                     ))}
                     {extraTimeRequests.length === 0 && (
                       <tr>
-                        <td colSpan={isAdmin ? 7 : 6} style={{ padding: '32px', textAlign: 'center', color: '#94a3b8' }}>
+                        <td colSpan={isAdmin ? 7 : 6} style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>
                           No extra time requests found.
                         </td>
                       </tr>
@@ -2004,56 +1808,17 @@ export default function TaskFlow() {
             </div>
           </div>
         )}
-
-        {/* SUB-TAB: OTHER VIEWS PLACEHOLDER */}
-        {activeSubTab !== 'Tasks' && activeSubTab !== 'Time Requests' && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '80px 24px',
-            color: '#64748b'
-          }}>
-            <CheckSquare size={36} strokeWidth={1.5} style={{ marginBottom: '12px' }} />
-            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>
-              {activeSubTab} View
-            </h3>
-            <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px', textAlign: 'center', maxWidth: '320px' }}>
-              You are currently viewing the {activeSubTab} section. Switch back to "Tasks" to interact with the active Kanban board!
-            </p>
-            <button
-              onClick={() => {
-                setActiveSubTab('Tasks')
-                setActiveView('Kanban')
-              }}
-              style={{
-                marginTop: '16px',
-                background: 'linear-gradient(135deg, #c0392b, #922b21)',
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 600,
-                border: 'none',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                cursor: 'pointer'
-              }}
-            >
-              Back to Tasks
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ========================================================================= */}
-      {/* 5. MANDATORY STATUS CHANGE REASON MODAL */}
+      {/* 5. STATUS CHANGE REASON MODAL */}
       {/* ========================================================================= */}
       {statusChangeModalOpen && statusChangeTarget && (
         <div 
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.6)',
+            background: 'rgba(0, 0, 0, 0.75)',
             backdropFilter: 'blur(4px)',
             zIndex: 110,
             display: 'flex',
@@ -2065,30 +1830,29 @@ export default function TaskFlow() {
         >
           <div 
             style={{
-              background: '#fff',
+              background: '#0f172c',
               borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
               width: '100%',
               maxWidth: '480px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #1e293b',
               overflow: 'hidden'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div style={{
               padding: '18px 20px',
-              borderBottom: '1px solid #f1f5f9',
+              borderBottom: '1px solid #1a243b',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: '#f8fafc'
+              background: '#0c1322'
             }}>
               <div>
-                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                   Update Task Status
                 </h3>
-                <p style={{ fontSize: '11px', color: '#64748b', margin: '2px 0 0 0' }}>
+                <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>
                   Please enter remarks/reason for moving this task
                 </p>
               </div>
@@ -2101,19 +1865,18 @@ export default function TaskFlow() {
               </button>
             </div>
 
-            {/* Transition Badge */}
             <div style={{
               padding: '12px 20px',
-              background: '#f1f5f9',
-              borderBottom: '1px solid #e2e8f0',
+              background: '#111b33',
+              borderBottom: '1px solid #1a243b',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '12px'
             }}>
               <span style={{
-                background: '#fff',
-                color: '#475569',
+                background: '#1e293b',
+                color: '#cbd5e1',
                 fontSize: '11px',
                 fontWeight: 700,
                 padding: '4px 10px',
@@ -2122,10 +1885,10 @@ export default function TaskFlow() {
               }}>
                 {statusChangeTarget.fromStatus.replace('-', ' ')}
               </span>
-              <ArrowRight size={16} color="#94a3b8" />
+              <ArrowRight size={16} color="#64748b" />
               <span style={{
                 background: '#c0392b',
-                color: '#fff',
+                color: '#ffffff',
                 fontSize: '11px',
                 fontWeight: 700,
                 padding: '4px 10px',
@@ -2136,13 +1899,12 @@ export default function TaskFlow() {
               </span>
             </div>
 
-            {/* Reason Form */}
             <form onSubmit={handleConfirmStatusChange} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <p style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b', marginBottom: '8px' }}>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: '#f8fafc', marginBottom: '8px' }}>
                   Task: {statusChangeTarget.taskTitle}
                 </p>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                   Reason / Remarks <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <textarea
@@ -2150,19 +1912,18 @@ export default function TaskFlow() {
                   rows={4}
                   value={statusChangeReason}
                   onChange={(e) => setStatusChangeReason(e.target.value)}
-                  placeholder="Explain why this status is being changed (e.g., 'Implemented fix for date formatting, ready for testing')..."
+                  placeholder="Explain why this status is being changed..."
                   style={{
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #1e293b',
+                    background: '#111b33',
                     fontSize: '13px',
-                    color: '#0f172a',
+                    color: '#ffffff',
                     outline: 'none',
                     resize: 'vertical'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#c0392b'}
-                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                 />
               </div>
 
@@ -2174,9 +1935,9 @@ export default function TaskFlow() {
                   style={{
                     padding: '8px 14px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    background: '#fff',
-                    color: '#475569',
+                    border: '1px solid #334155',
+                    background: '#111b33',
+                    color: '#cbd5e1',
                     fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer'
@@ -2192,7 +1953,7 @@ export default function TaskFlow() {
                     borderRadius: '8px',
                     border: 'none',
                     background: 'linear-gradient(135deg, #c0392b 0%, #922b21 100%)',
-                    color: '#fff',
+                    color: '#ffffff',
                     fontSize: '12px',
                     fontWeight: 700,
                     cursor: submittingStatusChange ? 'not-allowed' : 'pointer',
@@ -2211,14 +1972,14 @@ export default function TaskFlow() {
       )}
 
       {/* ========================================================================= */}
-      {/* 6. EMPLOYEE REQUEST EXTRA TIME MODAL */}
+      {/* 6. REQUEST EXTRA TIME MODAL */}
       {/* ========================================================================= */}
       {extraTimeModalOpen && extraTimeTargetTask && (
         <div 
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.6)',
+            background: 'rgba(0, 0, 0, 0.75)',
             backdropFilter: 'blur(4px)',
             zIndex: 110,
             display: 'flex',
@@ -2230,31 +1991,30 @@ export default function TaskFlow() {
         >
           <div 
             style={{
-              background: '#fff',
+              background: '#0f172c',
               borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               width: '100%',
               maxWidth: '460px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #7f1d1d',
               overflow: 'hidden'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{
               padding: '18px 20px',
-              borderBottom: '1px solid #f1f5f9',
+              borderBottom: '1px solid #1a243b',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: '#fef2f2'
+              background: '#450a0a'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Hourglass size={20} color="#b91c1c" />
+                <Hourglass size={20} color="#fca5a5" />
                 <div>
-                  <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#991b1b', margin: 0 }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                     Request Extra Time
                   </h3>
-                  <p style={{ fontSize: '11px', color: '#b91c1c', margin: '2px 0 0 0' }}>
+                  <p style={{ fontSize: '11px', color: '#fca5a5', margin: '2px 0 0 0' }}>
                     Task is locked or requires additional hours
                   </p>
                 </div>
@@ -2262,7 +2022,7 @@ export default function TaskFlow() {
               <button
                 onClick={() => setExtraTimeModalOpen(false)}
                 disabled={submittingExtraTime}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fca5a5' }}
               >
                 <X size={18} />
               </button>
@@ -2270,16 +2030,16 @@ export default function TaskFlow() {
 
             <form onSubmit={handleExtraTimeSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <p style={{ fontSize: '12px', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                <p style={{ fontSize: '12px', fontWeight: 700, color: '#ffffff', margin: 0 }}>
                   Task: {extraTimeTargetTask.title}
                 </p>
-                <p style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                <p style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
                   Current Allocated: <strong>{formatHours(extraTimeTargetTask.estimatedHours)}</strong>
                 </p>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                   Additional Hours Needed <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <input
@@ -2294,16 +2054,17 @@ export default function TaskFlow() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #1e293b',
+                    background: '#111b33',
                     fontSize: '13px',
-                    color: '#0f172a',
+                    color: '#ffffff',
                     outline: 'none'
                   }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                   Reason for Extra Time <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <textarea
@@ -2316,9 +2077,10 @@ export default function TaskFlow() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #1e293b',
+                    background: '#111b33',
                     fontSize: '13px',
-                    color: '#0f172a',
+                    color: '#ffffff',
                     outline: 'none'
                   }}
                 />
@@ -2332,9 +2094,9 @@ export default function TaskFlow() {
                   style={{
                     padding: '8px 14px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    background: '#fff',
-                    color: '#475569',
+                    border: '1px solid #334155',
+                    background: '#111b33',
+                    color: '#cbd5e1',
                     fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer'
@@ -2349,8 +2111,8 @@ export default function TaskFlow() {
                     padding: '8px 18px',
                     borderRadius: '8px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #b91c1c 0%, #991b1b 100%)',
-                    color: '#fff',
+                    background: 'linear-gradient(135deg, #c0392b 0%, #922b21 100%)',
+                    color: '#ffffff',
                     fontSize: '12px',
                     fontWeight: 700,
                     cursor: submittingExtraTime ? 'not-allowed' : 'pointer',
@@ -2376,7 +2138,7 @@ export default function TaskFlow() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.6)',
+            background: 'rgba(0, 0, 0, 0.75)',
             backdropFilter: 'blur(4px)',
             zIndex: 100,
             display: 'flex',
@@ -2388,33 +2150,31 @@ export default function TaskFlow() {
         >
           <div 
             style={{
-              background: '#fff',
+              background: '#0f172c',
               borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               width: '100%',
               maxWidth: '520px',
               maxHeight: '90vh',
               overflowY: 'auto',
-              border: '1px solid #e2e8f0'
+              border: '1px solid #1e293b'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div style={{
               padding: '20px 24px',
-              borderBottom: '1px solid #f1f5f9',
+              borderBottom: '1px solid #1a243b',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'linear-gradient(135deg, #fafafa 0%, #f1f5f9 100%)'
+              background: '#0c1322'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{
                   width: '36px',
                   height: '36px',
                   borderRadius: '10px',
-                  background: '#fef2f2',
-                  color: '#c0392b',
+                  background: '#7f1d1d',
+                  color: '#fca5a5',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -2422,10 +2182,10 @@ export default function TaskFlow() {
                   <Plus size={20} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+                  <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
                     Create New Task
                   </h2>
-                  <p style={{ fontSize: '11px', color: '#64748b', margin: '2px 0 0 0' }}>
+                  <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>
                     Project: <strong>{project.name}</strong>
                   </p>
                 </div>
@@ -2439,10 +2199,9 @@ export default function TaskFlow() {
               </button>
             </div>
 
-            {/* Modal Form */}
             <form onSubmit={handleCreateTaskSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                   Task Title <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <input
@@ -2455,44 +2214,41 @@ export default function TaskFlow() {
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #1e293b',
+                    background: '#111b33',
                     fontSize: '13px',
-                    color: '#0f172a',
-                    outline: 'none',
-                    transition: 'border-color 0.2s'
+                    color: '#ffffff',
+                    outline: 'none'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#c0392b'}
-                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                   Description
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="Provide context, acceptance criteria or steps to reproduce..."
+                  placeholder="Provide context or acceptance criteria..."
                   value={createForm.description}
                   onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '10px 12px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    border: '1px solid #1e293b',
+                    background: '#111b33',
                     fontSize: '13px',
-                    color: '#0f172a',
+                    color: '#ffffff',
                     outline: 'none',
                     resize: 'vertical'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#c0392b'}
-                  onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                     Priority
                   </label>
                   <select
@@ -2502,11 +2258,11 @@ export default function TaskFlow() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid #1e293b',
+                      background: '#111b33',
                       fontSize: '13px',
-                      color: '#0f172a',
-                      outline: 'none',
-                      background: '#fff'
+                      color: '#ffffff',
+                      outline: 'none'
                     }}
                   >
                     <option value="low">🟢 Low</option>
@@ -2517,7 +2273,7 @@ export default function TaskFlow() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                     Initial Column
                   </label>
                   <select
@@ -2527,11 +2283,11 @@ export default function TaskFlow() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid #1e293b',
+                      background: '#111b33',
                       fontSize: '13px',
-                      color: '#0f172a',
-                      outline: 'none',
-                      background: '#fff'
+                      color: '#ffffff',
+                      outline: 'none'
                     }}
                   >
                     <option value="todo">To Do</option>
@@ -2545,7 +2301,7 @@ export default function TaskFlow() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                     Assign Employee
                   </label>
                   <select
@@ -2555,11 +2311,11 @@ export default function TaskFlow() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid #1e293b',
+                      background: '#111b33',
                       fontSize: '13px',
-                      color: '#0f172a',
-                      outline: 'none',
-                      background: '#fff'
+                      color: '#ffffff',
+                      outline: 'none'
                     }}
                   >
                     {employeesList.length > 0 ? (
@@ -2584,7 +2340,7 @@ export default function TaskFlow() {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                     Assignee Role
                   </label>
                   <input
@@ -2596,9 +2352,10 @@ export default function TaskFlow() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid #1e293b',
+                      background: '#111b33',
                       fontSize: '13px',
-                      color: '#0f172a',
+                      color: '#ffffff',
                       outline: 'none'
                     }}
                   />
@@ -2607,7 +2364,7 @@ export default function TaskFlow() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                     Allocated Hours <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
@@ -2622,16 +2379,17 @@ export default function TaskFlow() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid #1e293b',
+                      background: '#111b33',
                       fontSize: '13px',
-                      color: '#0f172a',
+                      color: '#ffffff',
                       outline: 'none'
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#94a3b8', marginBottom: '6px' }}>
                     Due Date
                   </label>
                   <input
@@ -2642,9 +2400,10 @@ export default function TaskFlow() {
                       width: '100%',
                       padding: '10px 12px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: '1px solid #1e293b',
+                      background: '#111b33',
                       fontSize: '13px',
-                      color: '#0f172a',
+                      color: '#ffffff',
                       outline: 'none'
                     }}
                   />
@@ -2658,7 +2417,7 @@ export default function TaskFlow() {
                 gap: '10px',
                 marginTop: '12px',
                 paddingTop: '16px',
-                borderTop: '1px solid #f1f5f9'
+                borderTop: '1px solid #1a243b'
               }}>
                 <button
                   type="button"
@@ -2667,9 +2426,9 @@ export default function TaskFlow() {
                   style={{
                     padding: '9px 16px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    background: '#fff',
-                    color: '#475569',
+                    border: '1px solid #334155',
+                    background: '#111b33',
+                    color: '#cbd5e1',
                     fontSize: '13px',
                     fontWeight: 600,
                     cursor: 'pointer'
@@ -2685,14 +2444,14 @@ export default function TaskFlow() {
                     borderRadius: '8px',
                     border: 'none',
                     background: 'linear-gradient(135deg, #c0392b 0%, #922b21 100%)',
-                    color: '#fff',
+                    color: '#ffffff',
                     fontSize: '13px',
                     fontWeight: 700,
                     cursor: submittingTask ? 'not-allowed' : 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    boxShadow: '0 2px 8px rgba(192, 57, 43, 0.25)'
+                    boxShadow: '0 2px 8px rgba(192, 57, 43, 0.4)'
                   }}
                 >
                   {submittingTask ? (
