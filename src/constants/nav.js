@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Clock, Timer, CalendarDays, Home, Package,
   Umbrella, Bell, CheckSquare, Video, FileText, ClipboardList,
   LogOut, Settings, MessageSquare, Workflow, BarChart2,
-  Users, Building2, DollarSign, Gift, Briefcase, UserCheck,
+  Users, Building2, DollarSign, Gift, Briefcase,
   Compass,
 } from 'lucide-react'
 
@@ -34,7 +34,6 @@ export const ADMIN_NAV = [
   { label: 'Meeting Hub', path: '/admin/meeting-hub', icon: Video },
   { label: 'TaskFlow', path: '/admin/taskflow', icon: Workflow },
   { label: 'Notifications', path: '/admin/notifications', icon: Bell },
-  { label: 'Users', path: '/admin/users', icon: UserCheck },
   { label: 'Employees', path: '/admin/employees', icon: Users },
   { label: 'Departments', path: '/admin/departments', icon: Building2 },
   { label: 'Designations', path: '/admin/designations', icon: Briefcase },

@@ -33,6 +33,7 @@ export default function Employees() {
 
   // Form states for create
   const [createForm, setCreateForm] = useState({
+    employeeId: '',
     name: '',
     email: '',
     password: '',
@@ -49,6 +50,7 @@ export default function Employees() {
 
   // Form states for edit
   const [editForm, setEditForm] = useState({
+    employeeId: '',
     name: '',
     email: '',
     phone: '',
@@ -156,6 +158,7 @@ export default function Employees() {
   const handleOpenEdit = (emp) => {
     setSelectedEmployee(emp)
     setEditForm({
+      employeeId: emp.userId?.employeeId || '',
       name: emp.userId?.name || '',
       email: emp.userId?.email || '',
       phone: emp.phone || '',
@@ -185,6 +188,9 @@ export default function Employees() {
     try {
       setActionLoading(true)
       const formData = new FormData()
+      if (createForm.employeeId && createForm.employeeId.trim()) {
+        formData.append('employeeId', createForm.employeeId.trim())
+      }
       formData.append('name', createForm.name)
       formData.append('email', createForm.email)
       formData.append('password', createForm.password)
@@ -204,6 +210,7 @@ export default function Employees() {
       showSuccess(msg)
       setCreateModalOpen(false)
       setCreateForm({
+        employeeId: '',
         name: '',
         email: '',
         password: '',
@@ -235,6 +242,9 @@ export default function Employees() {
     try {
       setActionLoading(true)
       const formData = new FormData()
+      if (editForm.employeeId && editForm.employeeId.trim()) {
+        formData.append('employeeId', editForm.employeeId.trim())
+      }
       formData.append('name', editForm.name)
       formData.append('email', editForm.email)
       formData.append('phone', editForm.phone)
@@ -619,6 +629,20 @@ export default function Employees() {
             </div>
 
             <form onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Employee ID (Optional / Auto) */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#374151', textTransform: 'uppercase', marginBottom: 4 }}>
+                  Employee ID <span style={{ color: '#64748b', fontWeight: 400, textTransform: 'none' }}>(Optional - leave blank to auto-generate e.g. TZ-EMP-001)</span>
+                </label>
+                <input
+                  type="text"
+                  value={createForm.employeeId}
+                  onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value.toUpperCase() })}
+                  placeholder="e.g. TZ-EMP-001"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none' }}
+                />
+              </div>
+
               {/* Name & Email */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
@@ -832,6 +856,20 @@ export default function Employees() {
             </div>
 
             <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Employee ID */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#374151', textTransform: 'uppercase', marginBottom: 4 }}>
+                  Employee ID
+                </label>
+                <input
+                  type="text"
+                  value={editForm.employeeId}
+                  onChange={(e) => setEditForm({ ...editForm, employeeId: e.target.value.toUpperCase() })}
+                  placeholder="e.g. TZ-EMP-001"
+                  style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 13, outline: 'none' }}
+                />
+              </div>
+
               {/* Name & Email */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>

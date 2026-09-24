@@ -27,7 +27,6 @@ import ECRM from '../pages/employee/CRM'
 
 // Admin pages
 import Dashboard from '../pages/admin/Dashboard'
-import Users from '../pages/admin/Users'
 import Employees from '../pages/admin/Employees'
 import Departments from '../pages/admin/Departments'
 import Designations from '../pages/admin/Designations'
@@ -93,7 +92,7 @@ const router = createBrowserRouter([
       { path: 'chat', element: <AChat /> },
       { path: 'meeting-hub', element: <AMeetingHub /> },
       { path: 'taskflow', element: <TaskFlow /> },
-      { path: 'users', element: <Users /> },
+      { path: 'users', element: <Navigate to="/admin/employees" replace /> },
       { path: 'employees', element: <Employees /> },
       { path: 'departments', element: <Departments /> },
       { path: 'designations', element: <Designations /> },
