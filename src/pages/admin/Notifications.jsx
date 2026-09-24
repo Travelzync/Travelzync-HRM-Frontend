@@ -10,6 +10,7 @@ import {
   deleteNotification
 } from '../../services/notificationService'
 import { showSuccess, showError } from '../../utils/toast'
+import { subscribeToSocket } from '../../services/socketService'
 
 export default function AdminNotifications() {
   const [notifications, setNotifications] = useState([])
@@ -40,6 +41,12 @@ export default function AdminNotifications() {
 
   useEffect(() => {
     loadNotifications()
+    const unsub = subscribeToSocket('new_notification', (notif) => {
+      if (notif) {
+        setNotifications((prev) => [notif, ...prev])
+      }
+    })
+    return () => unsub()
   }, [])
 
   const handleSendBroadcast = async (e) => {

@@ -20,7 +20,9 @@ import {
   CornerDownRight,
   ChevronDown,
   ChevronUp,
+  AlertTriangle,
 } from 'lucide-react'
+import { toast } from 'react-toastify'
 import {
   getChannels,
   getChatUsers,
@@ -29,6 +31,7 @@ import {
   createChannel,
   addChannelMembers,
   removeChannelMember,
+  deleteChannel,
   pinMessage,
   deleteMessage,
   reactToMessage,
@@ -41,12 +44,16 @@ import {
   joinChannelRoom,
   sendTypingStatus,
 } from '../../services/socketService'
+import {
+  requestNotificationPermission,
+  sendBrowserNotification,
+} from '../../services/browserNotificationService'
 
 const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '🎉']
 
 export default function AdminChat() {
   const currentUser = getCurrentUser()
-  const currentUserId = currentUser?.userId || currentUser?._id
+  const currentUserId = (currentUser?.id || currentUser?._id || currentUser?.userId)?.toString()
 
   const [publicChannels, setPublicChannels] = useState([])
   const [privateChannels, setPrivateChannels] = useState([])
@@ -85,6 +92,10 @@ export default function AdminChat() {
   const [showManageModal, setShowManageModal] = useState(false)
   const [memberToAdd, setMemberToAdd] = useState('')
   const [managingMembers, setManagingMembers] = useState(false)
+
+  // Delete channel modal
+  const [channelToDelete, setChannelToDelete] = useState(null)
+  const [deletingChannel, setDeletingChannel] = useState(false)
 
   // Forward Modal State
   const [forwardModalMsg, setForwardModalMsg] = useState(null)
@@ -129,6 +140,7 @@ export default function AdminChat() {
   useEffect(() => {
     loadSidebar()
     initSocket()
+    requestNotificationPermission()
 
     const unsubOnline = subscribeToSocket('online_users', (userIds) => {
       if (Array.isArray(userIds)) {
@@ -158,11 +170,51 @@ export default function AdminChat() {
       loadSidebar()
     })
 
+    const unsubChannelDeleted = subscribeToSocket('channel_deleted', ({ channelId }) => {
+      setPublicChannels((prev) => prev.filter((c) => c.id !== channelId))
+      setPrivateChannels((prev) => prev.filter((c) => c.id !== channelId))
+      if (selectedChat?.id === channelId) {
+        setSelectedChat({
+          type: 'public',
+          id: 'general',
+          name: 'general',
+          label: 'General Hub',
+        })
+      }
+    })
+
     const unsubMessageAlert = subscribeToSocket('new_message_alert', (alert) => {
       if (!alert) return
+      const isCurrentChat =
+        alert.type === 'direct'
+          ? selectedChat?.type === 'direct' && selectedChat?.recipientId === alert.senderId?.toString()
+          : selectedChat?.type !== 'direct' && selectedChat?.id === alert.channel
+
+      if (!isCurrentChat) {
+        const notifTitle =
+          alert.type === 'direct'
+            ? `Message from ${alert.senderName || 'Staff'}`
+            : `#${alert.channel} • ${alert.senderName || 'Staff'}`
+        sendBrowserNotification(notifTitle, {
+          body: alert.message || 'New message in chat',
+          url: '/admin/chat',
+        })
+
+        toast.info(
+          <div style={{ cursor: 'pointer' }}>
+            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{notifTitle}</div>
+            <div style={{ fontSize: 12, opacity: 0.9 }}>{alert.message}</div>
+          </div>,
+          {
+            position: 'top-right',
+            autoClose: 4000,
+          }
+        )
+      }
+
       if (alert.type === 'direct') {
         const sId = alert.senderId?.toString()
-        if (selectedChat?.type === 'direct' && selectedChat?.recipientId === sId) return
+        if (isCurrentChat) return
         setDmUsers((prev) =>
           prev.map((u) =>
             u._id.toString() === sId ? { ...u, unreadCount: (u.unreadCount || 0) + 1 } : u
@@ -170,7 +222,7 @@ export default function AdminChat() {
         )
       } else {
         const ch = alert.channel
-        if (selectedChat?.type !== 'direct' && selectedChat?.id === ch) return
+        if (isCurrentChat) return
         setPublicChannels((prev) =>
           prev.map((c) => (c.id === ch ? { ...c, unreadCount: (c.unreadCount || 0) + 1 } : c))
         )
@@ -186,6 +238,7 @@ export default function AdminChat() {
       unsubUserOffline()
       unsubChannelCreated()
       unsubChannelUpdated()
+      unsubChannelDeleted()
       unsubMessageAlert()
     }
   }, [loadSidebar, selectedChat])
@@ -231,11 +284,11 @@ export default function AdminChat() {
       let isRelevant = false
       if (selectedChat.type === 'direct') {
         const otherId = selectedChat.recipientId?.toString()
-        const sId = (msg.sender?._id || msg.sender)?.toString()
-        const rId = (msg.recipient?._id || msg.recipient)?.toString()
+        const sId = (msg.sender?._id || msg.sender?.id || msg.sender)?.toString()
+        const rId = (msg.recipient?._id || msg.recipient?.id || msg.recipient)?.toString()
         isRelevant =
-          (sId === otherId && rId === currentUserId?.toString()) ||
-          (sId === currentUserId?.toString() && rId === otherId)
+          (sId === otherId && rId === currentUserId) ||
+          (sId === currentUserId && rId === otherId)
       } else {
         isRelevant = msg.channel === selectedChat.id
       }
@@ -246,6 +299,18 @@ export default function AdminChat() {
           return [...prev, msg]
         })
         scrollToBottom(true)
+
+        const msgSenderId = (msg.sender?._id || msg.sender?.id || msg.sender)?.toString()
+        if (msgSenderId !== currentUserId) {
+          const title =
+            msg.type === 'direct'
+              ? `Message from ${msg.sender?.name || 'Staff'}`
+              : `#${msg.channel} • ${msg.sender?.name || 'Staff'}`
+          sendBrowserNotification(title, {
+            body: msg.text,
+            url: '/admin/chat',
+          })
+        }
       }
     })
 
@@ -274,11 +339,11 @@ export default function AdminChat() {
     })
 
     const unsubTyping = subscribeToSocket('user_typing', ({ userId, channel, isTyping, type }) => {
-      if (userId === currentUserId) return
+      if (userId?.toString() === currentUserId) return
 
       let isCurrentRoom = false
       if (selectedChat.type === 'direct' && type === 'direct') {
-        isCurrentRoom = userId === selectedChat.recipientId
+        isCurrentRoom = userId?.toString() === selectedChat.recipientId?.toString()
       } else if (selectedChat.type !== 'direct' && type === 'channel') {
         isCurrentRoom = channel === selectedChat.id
       }
@@ -349,12 +414,13 @@ export default function AdminChat() {
       if (res?.success && res.chatMessage) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === res.chatMessage._id)) return prev
-          return [...prev, res.chatMessage]
+          return [...prev, { ...res.chatMessage, isOutgoing: true }]
         })
         scrollToBottom(true)
       }
     } catch (err) {
       console.error(err)
+      toast.error('Failed to send message')
     } finally {
       setSending(false)
     }
@@ -368,15 +434,15 @@ export default function AdminChat() {
         setMessages((prev) =>
           prev.map((m) => (m._id === msgId ? { ...m, isPinned: res.isPinned } : m))
         )
+        toast.success(res.isPinned ? 'Message pinned' : 'Message unpinned')
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update pin')
+      toast.error(err.response?.data?.message || 'Failed to update pin')
     }
   }
 
   // Delete message
   const handleDelete = async (msgId) => {
-    if (!window.confirm('Delete this message for everyone?')) return
     try {
       const res = await deleteMessage(msgId)
       if (res?.success) {
@@ -387,9 +453,10 @@ export default function AdminChat() {
               : m
           )
         )
+        toast.success('Message deleted')
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete message')
+      toast.error(err.response?.data?.message || 'Failed to delete message')
     }
   }
 
@@ -435,13 +502,13 @@ export default function AdminChat() {
           (forwardTargetType !== 'direct' && forwardTargetChannel === selectedChat.id) ||
           (forwardTargetType === 'direct' && forwardTargetRecipient === selectedChat.recipientId)
         ) {
-          setMessages((prev) => [...prev, res.chatMessage])
+          setMessages((prev) => [...prev, { ...res.chatMessage, isOutgoing: true }])
           scrollToBottom(true)
         }
-        alert('Message forwarded successfully!')
+        toast.success('Message forwarded successfully!')
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to forward message')
+      toast.error(err.response?.data?.message || 'Failed to forward message')
     } finally {
       setForwarding(false)
     }
@@ -467,6 +534,7 @@ export default function AdminChat() {
         setNewGroupDesc('')
         setSelectedMemberIds([])
         setNewGroupType('public')
+        toast.success(res.message || 'Group created successfully!')
         await loadSidebar()
         setSelectedChat({
           type: res.channel.type,
@@ -476,9 +544,35 @@ export default function AdminChat() {
         })
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create group')
+      toast.error(err.response?.data?.message || 'Failed to create group')
     } finally {
       setCreatingGroup(false)
+    }
+  }
+
+  // Delete Channel
+  const handleConfirmDeleteChannel = async () => {
+    if (!channelToDelete || deletingChannel) return
+    try {
+      setDeletingChannel(true)
+      const res = await deleteChannel(channelToDelete.id)
+      if (res?.success) {
+        toast.success(res.message || 'Channel deleted successfully')
+        setChannelToDelete(null)
+        await loadSidebar()
+        if (selectedChat?.id === channelToDelete.id) {
+          setSelectedChat({
+            type: 'public',
+            id: 'general',
+            name: 'general',
+            label: 'General Hub',
+          })
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete channel')
+    } finally {
+      setDeletingChannel(false)
     }
   }
 
@@ -494,10 +588,11 @@ export default function AdminChat() {
           ...prev,
           members: res.channel.members,
         }))
+        toast.success('Member added successfully')
         await loadSidebar()
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to add member')
+      toast.error(err.response?.data?.message || 'Failed to add member')
     } finally {
       setManagingMembers(false)
     }
@@ -514,10 +609,11 @@ export default function AdminChat() {
           ...prev,
           members: res.channel.members,
         }))
+        toast.success('Member removed from group')
         await loadSidebar()
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to remove member')
+      toast.error(err.response?.data?.message || 'Failed to remove member')
     } finally {
       setManagingMembers(false)
     }
@@ -612,54 +708,78 @@ export default function AdminChat() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 6 }}>
               {publicChannels.map((c) => {
                 const isSelected = selectedChat.type === 'public' && selectedChat.id === c.id
+                const canDelete = c.id !== 'general'
+
                 return (
                   <div
                     key={c.id}
-                    onClick={() => {
-                      setSelectedChat({
-                        type: 'public',
-                        id: c.id,
-                        name: c.name,
-                        label: c.label || c.name,
-                      })
-                      setPublicChannels((prev) =>
-                        prev.map((item) => (item.id === c.id ? { ...item, unreadCount: 0 } : item))
-                      )
-                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '7px 10px',
                       borderRadius: 8,
-                      cursor: 'pointer',
                       background: isSelected ? '#fef2f2' : 'transparent',
                       color: isSelected ? '#c0392b' : '#334155',
                       fontWeight: isSelected ? 700 : 500,
                       fontSize: 12.5,
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    <div
+                      onClick={() => {
+                        setSelectedChat({
+                          type: 'public',
+                          id: c.id,
+                          name: c.name,
+                          label: c.label || c.name,
+                        })
+                        setPublicChannels((prev) =>
+                          prev.map((item) => (item.id === c.id ? { ...item, unreadCount: 0 } : item))
+                        )
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, cursor: 'pointer', minWidth: 0 }}
+                    >
                       <Hash size={14} color={isSelected ? '#c0392b' : '#94a3b8'} />
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {c.name}
                       </span>
                     </div>
 
-                    {c.unreadCount > 0 && (
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          background: '#c0392b',
-                          color: '#fff',
-                          borderRadius: 8,
-                          padding: '1px 5px',
-                        }}
-                      >
-                        {c.unreadCount}
-                      </span>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {c.unreadCount > 0 && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            background: '#c0392b',
+                            color: '#fff',
+                            borderRadius: 8,
+                            padding: '1px 5px',
+                          }}
+                        >
+                          {c.unreadCount}
+                        </span>
+                      )}
+
+                      {canDelete && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setChannelToDelete(c)
+                          }}
+                          title="Delete Channel"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#94a3b8',
+                            padding: 2,
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -741,6 +861,20 @@ export default function AdminChat() {
                           }}
                         >
                           <Settings size={13} />
+                        </button>
+
+                        <button
+                          onClick={() => setChannelToDelete(group)}
+                          title="Delete group"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#ef4444',
+                            padding: 2,
+                          }}
+                        >
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     </div>
@@ -1061,8 +1195,10 @@ export default function AdminChat() {
             </div>
           ) : (
             messages.map((msg, i) => {
-              const senderId = (msg.sender?._id || msg.sender)?.toString()
-              const isOutgoing = senderId === currentUserId?.toString()
+              // Exact outgoing check: matches sender ID or flag
+              const senderId = (msg.sender?._id || msg.sender?.id || msg.sender)?.toString()
+              const isOutgoing = Boolean(msg.isOutgoing || (currentUserId && senderId === currentUserId))
+
               const sName = msg.sender?.name || 'User'
               const sInitials = sName
                 .split(' ')
@@ -1085,9 +1221,11 @@ export default function AdminChat() {
                     gap: 10,
                     alignItems: 'flex-start',
                     justifyContent: isOutgoing ? 'flex-end' : 'flex-start',
+                    width: '100%',
                     position: 'relative',
                   }}
                 >
+                  {/* Left avatar only for incoming messages */}
                   {!isOutgoing && (
                     <div
                       style={{
@@ -1113,7 +1251,9 @@ export default function AdminChat() {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: isOutgoing ? 'flex-end' : 'flex-start',
-                      maxWidth: '70%',
+                      maxWidth: '72%',
+                      marginLeft: isOutgoing ? 'auto' : 0,
+                      marginRight: isOutgoing ? 0 : 'auto',
                       position: 'relative',
                     }}
                   >
@@ -1162,7 +1302,7 @@ export default function AdminChat() {
                       </div>
                     )}
 
-                    {/* Message Bubble */}
+                    {/* Message Bubble - RIGHT SIDE FOR SENDER */}
                     <div
                       style={{
                         background: msg.isDeleted
@@ -1171,14 +1311,15 @@ export default function AdminChat() {
                           ? 'linear-gradient(135deg, #c0392b, #922b21)'
                           : '#ffffff',
                         color: msg.isDeleted ? '#64748b' : isOutgoing ? '#ffffff' : '#0f172a',
-                        borderRadius: isOutgoing ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                        padding: '9px 14px',
+                        borderRadius: isOutgoing ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                        padding: '10px 16px',
                         fontSize: 13,
                         lineHeight: 1.45,
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                        boxShadow: isOutgoing ? '0 2px 6px rgba(192, 57, 43, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
                         border: msg.isDeleted ? '1px dashed #cbd5e1' : isOutgoing ? 'none' : '1px solid #e2e8f0',
                         wordBreak: 'break-word',
                         fontStyle: msg.isDeleted ? 'italic' : 'normal',
+                        alignSelf: isOutgoing ? 'flex-end' : 'flex-start',
                         position: 'relative',
                       }}
                     >
@@ -1198,7 +1339,7 @@ export default function AdminChat() {
                             display: 'flex',
                             alignItems: 'center',
                             gap: 4,
-                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
                             zIndex: 20,
                           }}
                         >
@@ -1323,7 +1464,7 @@ export default function AdminChat() {
                       >
                         {msg.reactions.map((r) => {
                           const hasReacted = r.users?.some(
-                            (u) => (u._id || u).toString() === currentUserId?.toString()
+                            (u) => (u._id || u).toString() === currentUserId
                           )
                           return (
                             <button
@@ -1793,6 +1934,97 @@ export default function AdminChat() {
                   )
                 })}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CHANNEL CONFIRMATION MODAL */}
+      {channelToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 14,
+              width: '100%',
+              maxWidth: 400,
+              padding: 22,
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.25)',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                background: '#fef2f2',
+                color: '#dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px',
+              }}
+            >
+              <AlertTriangle size={22} />
+            </div>
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: '0 0 6px 0' }}>
+              Delete #{channelToDelete.name}?
+            </h3>
+            <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+              Are you sure you want to permanently delete this {channelToDelete.type} channel? All messages and history in this group will be deleted for all members.
+            </p>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setChannelToDelete(null)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: '1px solid #cbd5e1',
+                  background: '#fff',
+                  color: '#475569',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deletingChannel}
+                onClick={handleConfirmDeleteChannel}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: '#dc2626',
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: deletingChannel ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                {deletingChannel && <Loader2 size={13} className="animate-spin" />}
+                <span>Delete Channel</span>
+              </button>
             </div>
           </div>
         </div>

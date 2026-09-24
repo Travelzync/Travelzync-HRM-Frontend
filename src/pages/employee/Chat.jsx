@@ -17,6 +17,7 @@ import {
   CornerDownRight,
   Lock,
 } from 'lucide-react'
+import { toast } from 'react-toastify'
 import {
   getMessages,
   sendMessage,
@@ -34,6 +35,10 @@ import {
   joinChannelRoom,
   sendTypingStatus,
 } from '../../services/socketService'
+import {
+  requestNotificationPermission,
+  sendBrowserNotification,
+} from '../../services/browserNotificationService'
 
 const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '🎉']
 
@@ -48,7 +53,8 @@ export default function Chat() {
   const setSidebarOpen = context.setSidebarOpen || (() => {})
 
   const currentUser = getCurrentUser()
-  const currentUserId = currentUser?.userId || currentUser?._id
+  // Ensure we check all possible ID keys from login / session
+  const currentUserId = (currentUser?.id || currentUser?._id || currentUser?.userId)?.toString()
   const isAdmin = currentUser?.role === 'admin'
 
   const [messages, setMessages] = useState([])
@@ -107,6 +113,7 @@ export default function Chat() {
   // Join room and initial fetch
   useEffect(() => {
     fetchChatMessages()
+    requestNotificationPermission()
     if (selectedChat.type !== 'direct') {
       joinChannelRoom(selectedChat.id)
     }
@@ -127,11 +134,11 @@ export default function Chat() {
       let isRelevant = false
       if (selectedChat.type === 'direct') {
         const otherId = selectedChat.recipientId?.toString()
-        const sId = (msg.sender?._id || msg.sender)?.toString()
-        const rId = (msg.recipient?._id || msg.recipient)?.toString()
+        const sId = (msg.sender?._id || msg.sender?.id || msg.sender)?.toString()
+        const rId = (msg.recipient?._id || msg.recipient?.id || msg.recipient)?.toString()
         isRelevant =
-          (sId === otherId && rId === currentUserId?.toString()) ||
-          (sId === currentUserId?.toString() && rId === otherId)
+          (sId === otherId && rId === currentUserId) ||
+          (sId === currentUserId && rId === otherId)
       } else {
         isRelevant = msg.channel === selectedChat.id
       }
@@ -142,6 +149,19 @@ export default function Chat() {
           return [...prev, msg]
         })
         scrollToBottom(true)
+
+        // Browser desktop notification if incoming and window is not active
+        const msgSenderId = (msg.sender?._id || msg.sender?.id || msg.sender)?.toString()
+        if (msgSenderId !== currentUserId) {
+          const title =
+            msg.type === 'direct'
+              ? `Message from ${msg.sender?.name || 'Colleague'}`
+              : `#${msg.channel} • ${msg.sender?.name || 'Staff'}`
+          sendBrowserNotification(title, {
+            body: msg.text,
+            url: '/employee/chat',
+          })
+        }
       }
     })
 
@@ -176,11 +196,11 @@ export default function Chat() {
 
     // Typing status
     const unsubTyping = subscribeToSocket('user_typing', ({ userId, channel, recipientId, isTyping, type }) => {
-      if (userId === currentUserId) return
+      if (userId?.toString() === currentUserId) return
 
       let isCurrentRoom = false
       if (selectedChat.type === 'direct' && type === 'direct') {
-        isCurrentRoom = userId === selectedChat.recipientId
+        isCurrentRoom = userId?.toString() === selectedChat.recipientId?.toString()
       } else if (selectedChat.type !== 'direct' && type === 'channel') {
         isCurrentRoom = channel === selectedChat.id
       }
@@ -208,7 +228,6 @@ export default function Chat() {
   const handleInputChange = (e) => {
     setInputText(e.target.value)
 
-    // Emit typing true
     sendTypingStatus({
       channel: selectedChat.type !== 'direct' ? selectedChat.id : undefined,
       recipientId: selectedChat.type === 'direct' ? selectedChat.recipientId : undefined,
@@ -233,7 +252,6 @@ export default function Chat() {
     const textToSend = inputText.trim()
     setInputText('')
 
-    // Reset typing status immediately
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
     sendTypingStatus({
       channel: selectedChat.type !== 'direct' ? selectedChat.id : undefined,
@@ -254,12 +272,13 @@ export default function Chat() {
       if (res?.success && res.chatMessage) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === res.chatMessage._id)) return prev
-          return [...prev, res.chatMessage]
+          return [...prev, { ...res.chatMessage, isOutgoing: true }]
         })
         scrollToBottom(true)
       }
     } catch (err) {
       console.error('Failed to send message:', err)
+      toast.error('Failed to send message')
     } finally {
       setSending(false)
     }
@@ -275,15 +294,15 @@ export default function Chat() {
             m._id === msgId ? { ...m, isPinned: res.isPinned } : m
           )
         )
+        toast.success(res.isPinned ? 'Message pinned' : 'Message unpinned')
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update pin')
+      toast.error(err.response?.data?.message || 'Failed to update pin')
     }
   }
 
   // Soft Delete
   const handleDelete = async (msgId) => {
-    if (!window.confirm('Are you sure you want to delete this message?')) return
     try {
       const res = await deleteMessage(msgId)
       if (res?.success) {
@@ -294,9 +313,10 @@ export default function Chat() {
               : m
           )
         )
+        toast.success('Message deleted')
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete message')
+      toast.error(err.response?.data?.message || 'Failed to delete message')
     }
   }
 
@@ -354,18 +374,17 @@ export default function Chat() {
       const res = await forwardMessage(forwardModalMsg._id, payload)
       if (res?.success) {
         setForwardModalMsg(null)
-        // If forwarded to current room, add to list
         if (
           (forwardTargetType !== 'direct' && forwardTargetChannel === selectedChat.id) ||
           (forwardTargetType === 'direct' && forwardTargetRecipient === selectedChat.recipientId)
         ) {
-          setMessages((prev) => [...prev, res.chatMessage])
+          setMessages((prev) => [...prev, { ...res.chatMessage, isOutgoing: true }])
           scrollToBottom(true)
         }
-        alert('Message forwarded successfully!')
+        toast.success('Message forwarded successfully!')
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to forward message')
+      toast.error(err.response?.data?.message || 'Failed to forward message')
     } finally {
       setForwarding(false)
     }
@@ -600,8 +619,10 @@ export default function Chat() {
           </div>
         ) : (
           messages.map((msg, index) => {
-            const senderId = (msg.sender?._id || msg.sender)?.toString()
-            const isOutgoing = senderId === currentUserId?.toString()
+            // Precise check for current user outgoing message
+            const senderId = (msg.sender?._id || msg.sender?.id || msg.sender)?.toString()
+            const isOutgoing = Boolean(msg.isOutgoing || (currentUserId && senderId === currentUserId))
+
             const senderName = msg.sender?.name || 'User'
             const senderInitials = senderName
               .split(' ')
@@ -629,9 +650,11 @@ export default function Chat() {
                   gap: '10px',
                   alignItems: 'flex-start',
                   justifyContent: isOutgoing ? 'flex-end' : 'flex-start',
+                  width: '100%',
                   position: 'relative',
                 }}
               >
+                {/* Incoming Message Avatar (Left only) */}
                 {!isOutgoing && (
                   <div
                     style={{
@@ -657,11 +680,13 @@ export default function Chat() {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: isOutgoing ? 'flex-end' : 'flex-start',
-                    maxWidth: '70%',
+                    maxWidth: '72%',
+                    marginLeft: isOutgoing ? 'auto' : 0,
+                    marginRight: isOutgoing ? 0 : 'auto',
                     position: 'relative',
                   }}
                 >
-                  {/* Sender metadata & time */}
+                  {/* Sender metadata & time (Incoming only) */}
                   {!isOutgoing && (
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '3px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: '#1e293b' }}>
@@ -721,7 +746,7 @@ export default function Chat() {
                     </div>
                   )}
 
-                  {/* Message Bubble */}
+                  {/* Message Bubble - RIGHT SIDE FOR SENDER */}
                   <div
                     style={{
                       background: msg.isDeleted
@@ -734,14 +759,15 @@ export default function Chat() {
                         : isOutgoing
                         ? '#ffffff'
                         : '#0f172a',
-                      borderRadius: isOutgoing ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                      padding: '9px 14px',
+                      borderRadius: isOutgoing ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                      padding: '10px 16px',
                       fontSize: '13px',
                       lineHeight: 1.45,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                      boxShadow: isOutgoing ? '0 2px 6px rgba(192, 57, 43, 0.25)' : '0 1px 3px rgba(0,0,0,0.04)',
                       border: msg.isDeleted ? '1px dashed #cbd5e1' : isOutgoing ? 'none' : '1px solid #e2e8f0',
                       wordBreak: 'break-word',
                       fontStyle: msg.isDeleted ? 'italic' : 'normal',
+                      alignSelf: isOutgoing ? 'flex-end' : 'flex-start',
                       position: 'relative',
                     }}
                   >
@@ -761,7 +787,7 @@ export default function Chat() {
                           display: 'flex',
                           alignItems: 'center',
                           gap: 4,
-                          boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                          boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
                           zIndex: 20,
                         }}
                       >
@@ -869,7 +895,6 @@ export default function Chat() {
                               cursor: 'pointer',
                               padding: '2px 4px',
                               borderRadius: 4,
-                              transition: 'transform 0.1s',
                             }}
                           >
                             {emoji}
@@ -892,7 +917,7 @@ export default function Chat() {
                     >
                       {msg.reactions.map((r) => {
                         const hasReacted = r.users?.some(
-                          (u) => (u._id || u).toString() === currentUserId?.toString()
+                          (u) => (u._id || u).toString() === currentUserId
                         )
                         return (
                           <button
@@ -922,6 +947,7 @@ export default function Chat() {
                     </div>
                   )}
 
+                  {/* Outgoing Timestamp on the right */}
                   {isOutgoing && (
                     <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '3px' }}>
                       {timeStr}

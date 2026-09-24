@@ -13,6 +13,8 @@ import {
 } from '../../services/notificationService'
 import { showSuccess, showError } from '../../utils/toast'
 
+import { subscribeToSocket } from '../../services/socketService'
+
 export default function Notifications() {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -47,6 +49,12 @@ export default function Notifications() {
 
   useEffect(() => {
     loadNotifications()
+    const unsub = subscribeToSocket('new_notification', (notif) => {
+      if (notif) {
+        setNotifications((prev) => [notif, ...prev])
+      }
+    })
+    return () => unsub()
   }, [])
 
   const handleMarkRead = async (id) => {

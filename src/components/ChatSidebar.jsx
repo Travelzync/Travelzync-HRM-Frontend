@@ -12,14 +12,16 @@ import {
   UserPlus,
   Trash2,
   Loader2,
-  Shield,
+  AlertTriangle,
 } from 'lucide-react'
+import { toast } from 'react-toastify'
 import {
   getChannels,
   getChatUsers,
   createChannel,
   addChannelMembers,
   removeChannelMember,
+  deleteChannel,
 } from '../services/chatService'
 import { getCurrentUser } from '../services/authService'
 import { useTheme } from '../hooks/useTheme'
@@ -28,6 +30,10 @@ import {
   subscribeToSocket,
   joinChannelRoom,
 } from '../services/socketService'
+import {
+  requestNotificationPermission,
+  sendBrowserNotification,
+} from '../services/browserNotificationService'
 
 export default function ChatSidebar({
   isOpen,
@@ -61,6 +67,10 @@ export default function ChatSidebar({
   const [memberToAdd, setMemberToAdd] = useState('')
   const [managingMembers, setManagingMembers] = useState(false)
 
+  // Delete channel modal
+  const [channelToDelete, setChannelToDelete] = useState(null)
+  const [deletingChannel, setDeletingChannel] = useState(false)
+
   // Fetch channels & contacts
   const loadSidebarData = useCallback(async () => {
     try {
@@ -78,7 +88,6 @@ export default function ChatSidebar({
       if (usersRes.status === 'fulfilled' && usersRes.value?.success) {
         const users = usersRes.value.users || []
         setDmUsers(users)
-        // Initialize online users from user list isOnline property
         const onlineSet = new Set(
           users.filter((u) => u.isOnline).map((u) => u._id.toString())
         )
@@ -93,6 +102,7 @@ export default function ChatSidebar({
   useEffect(() => {
     loadSidebarData()
     initSocket()
+    requestNotificationPermission()
 
     // 1. Initial online users list from server
     const unsubOnline = subscribeToSocket('online_users', (userIds) => {
@@ -120,51 +130,16 @@ export default function ChatSidebar({
     })
 
     // 4. Channel created
-    const unsubChannelCreated = subscribeToSocket('channel_created', (chan) => {
-      if (!chan) return
-      if (chan.type === 'private') {
-        setPrivateChannels((prev) => {
-          if (prev.some((c) => c.id === chan.slug)) return prev
-          return [
-            ...prev,
-            {
-              _id: chan._id,
-              id: chan.slug,
-              name: chan.slug,
-              label: chan.name,
-              description: chan.description,
-              type: 'private',
-              members: chan.members,
-              unreadCount: 0,
-            },
-          ]
-        })
-      } else {
-        setPublicChannels((prev) => {
-          if (prev.some((c) => c.id === chan.slug)) return prev
-          return [
-            ...prev,
-            {
-              _id: chan._id,
-              id: chan.slug,
-              name: chan.slug,
-              label: chan.name,
-              description: chan.description,
-              type: 'public',
-              unreadCount: 0,
-            },
-          ]
-        })
-      }
-    })
-
-    // 5. Channel updated
-    const unsubChannelUpdated = subscribeToSocket('channel_updated', (chan) => {
-      if (!chan) return
+    const unsubChannelCreated = subscribeToSocket('channel_created', () => {
       loadSidebarData()
     })
 
-    // 6. Channel removed
+    // 5. Channel updated
+    const unsubChannelUpdated = subscribeToSocket('channel_updated', () => {
+      loadSidebarData()
+    })
+
+    // 6. Channel removed from user
     const unsubChannelRemoved = subscribeToSocket('channel_removed', ({ channelId }) => {
       setPrivateChannels((prev) => prev.filter((c) => c.id !== channelId))
       if (selectedChat?.id === channelId) {
@@ -177,14 +152,56 @@ export default function ChatSidebar({
       }
     })
 
-    // 7. Unread message alert
+    // 7. Channel completely deleted by admin
+    const unsubChannelDeleted = subscribeToSocket('channel_deleted', ({ channelId }) => {
+      setPublicChannels((prev) => prev.filter((c) => c.id !== channelId))
+      setPrivateChannels((prev) => prev.filter((c) => c.id !== channelId))
+      if (selectedChat?.id === channelId) {
+        setSelectedChat({
+          type: 'public',
+          id: 'general',
+          name: 'general',
+          label: 'General Hub',
+        })
+      }
+    })
+
+    // 8. Unread message alert & browser notifications
     const unsubMessageAlert = subscribeToSocket('new_message_alert', (alert) => {
       if (!alert) return
+
+      const isCurrentChat =
+        alert.type === 'direct'
+          ? selectedChat?.type === 'direct' && selectedChat?.recipientId === alert.senderId?.toString()
+          : selectedChat?.type !== 'direct' && selectedChat?.id === alert.channel
+
+      if (!isCurrentChat) {
+        // Desktop Browser Notification
+        const notifTitle =
+          alert.type === 'direct'
+            ? `Message from ${alert.senderName || 'Staff'}`
+            : `#${alert.channel} • ${alert.senderName || 'Staff'}`
+        sendBrowserNotification(notifTitle, {
+          body: alert.message || 'New message in chat',
+          url: isAdmin ? '/admin/chat' : '/employee/chat',
+        })
+
+        // React-Toastify popup
+        toast.info(
+          <div style={{ cursor: 'pointer' }}>
+            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{notifTitle}</div>
+            <div style={{ fontSize: 12, opacity: 0.9 }}>{alert.message}</div>
+          </div>,
+          {
+            position: 'top-right',
+            autoClose: 4000,
+          }
+        )
+      }
+
       if (alert.type === 'direct') {
         const sId = alert.senderId?.toString()
-        if (selectedChat?.type === 'direct' && selectedChat?.recipientId === sId) {
-          return // Currently open, no unread badge increment
-        }
+        if (isCurrentChat) return
         setDmUsers((prev) =>
           prev.map((u) =>
             u._id.toString() === sId
@@ -194,9 +211,7 @@ export default function ChatSidebar({
         )
       } else {
         const ch = alert.channel
-        if (selectedChat?.type !== 'direct' && selectedChat?.id === ch) {
-          return // Currently open
-        }
+        if (isCurrentChat) return
         setPublicChannels((prev) =>
           prev.map((c) => (c.id === ch ? { ...c, unreadCount: (c.unreadCount || 0) + 1 } : c))
         )
@@ -216,9 +231,10 @@ export default function ChatSidebar({
       unsubChannelCreated()
       unsubChannelUpdated()
       unsubChannelRemoved()
+      unsubChannelDeleted()
       unsubMessageAlert()
     }
-  }, [loadSidebarData, selectedChat, setSelectedChat])
+  }, [loadSidebarData, selectedChat, setSelectedChat, isAdmin])
 
   // Select a chat item and clear its unread count
   const handleSelectChat = (item) => {
@@ -262,6 +278,7 @@ export default function ChatSidebar({
         setNewGroupDesc('')
         setSelectedMemberIds([])
         setNewGroupType('public')
+        toast.success(res.message || 'Group created successfully!')
         await loadSidebarData()
         handleSelectChat({
           type: res.channel.type,
@@ -271,10 +288,35 @@ export default function ChatSidebar({
         })
       }
     } catch (err) {
-      console.error(err)
-      alert(err.response?.data?.message || 'Failed to create group')
+      toast.error(err.response?.data?.message || 'Failed to create group')
     } finally {
       setCreatingGroup(false)
+    }
+  }
+
+  // Delete Channel Handler (Admin only)
+  const handleConfirmDeleteChannel = async () => {
+    if (!channelToDelete || deletingChannel) return
+    try {
+      setDeletingChannel(true)
+      const res = await deleteChannel(channelToDelete.id)
+      if (res?.success) {
+        toast.success(res.message || 'Channel deleted successfully')
+        setChannelToDelete(null)
+        await loadSidebarData()
+        if (selectedChat?.id === channelToDelete.id) {
+          setSelectedChat({
+            type: 'public',
+            id: 'general',
+            name: 'general',
+            label: 'General Hub',
+          })
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete channel')
+    } finally {
+      setDeletingChannel(false)
     }
   }
 
@@ -290,10 +332,11 @@ export default function ChatSidebar({
           ...prev,
           members: res.channel.members,
         }))
+        toast.success('Member added successfully')
         await loadSidebarData()
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to add member')
+      toast.error(err.response?.data?.message || 'Failed to add member')
     } finally {
       setManagingMembers(false)
     }
@@ -310,10 +353,11 @@ export default function ChatSidebar({
           ...prev,
           members: res.channel.members,
         }))
+        toast.success('Member removed from group')
         await loadSidebarData()
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to remove member')
+      toast.error(err.response?.data?.message || 'Failed to remove member')
     } finally {
       setManagingMembers(false)
     }
@@ -353,7 +397,7 @@ export default function ChatSidebar({
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        {/* Sidebar Header: Back Button & Branding */}
+        {/* Sidebar Header */}
         <div
           style={{
             padding: '16px',
@@ -466,29 +510,39 @@ export default function ChatSidebar({
               {publicChannels.map((channel) => {
                 const isSelected =
                   selectedChat?.type === 'public' && selectedChat?.id === channel.id
+                const canDelete = isAdmin && channel.id !== 'general'
+
                 return (
                   <div
                     key={channel.id}
-                    onClick={() =>
-                      handleSelectChat({
-                        type: 'public',
-                        id: channel.id,
-                        name: channel.name,
-                        label: channel.label || channel.name,
-                      })
-                    }
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '7px 10px',
+                      padding: '6px 10px',
                       borderRadius: '6px',
-                      cursor: 'pointer',
                       background: isSelected ? 'rgba(255,255,255,0.2)' : 'transparent',
                       transition: 'all 0.15s',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                    <div
+                      onClick={() =>
+                        handleSelectChat({
+                          type: 'public',
+                          id: channel.id,
+                          name: channel.name,
+                          label: channel.label || channel.name,
+                        })
+                      }
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
                       <Hash size={14} color={isSelected ? '#fff' : 'rgba(255,255,255,0.7)'} />
                       <span
                         style={{
@@ -504,20 +558,41 @@ export default function ChatSidebar({
                       </span>
                     </div>
 
-                    {channel.unreadCount > 0 && (
-                      <span
-                        style={{
-                          fontSize: '10px',
-                          fontWeight: 700,
-                          background: '#fff',
-                          color: '#c0392b',
-                          borderRadius: '8px',
-                          padding: '1px 5px',
-                        }}
-                      >
-                        {channel.unreadCount}
-                      </span>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {channel.unreadCount > 0 && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            background: '#fff',
+                            color: '#c0392b',
+                            borderRadius: '8px',
+                            padding: '1px 5px',
+                          }}
+                        >
+                          {channel.unreadCount}
+                        </span>
+                      )}
+
+                      {canDelete && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setChannelToDelete(channel)
+                          }}
+                          title="Delete channel"
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'rgba(255,255,255,0.5)',
+                            padding: 2,
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )
               })}
@@ -615,23 +690,42 @@ export default function ChatSidebar({
                         )}
 
                         {isAdmin && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setActiveManageChannel(group)
-                              setShowManageModal(true)
-                            }}
-                            title="Manage Group Members"
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              color: 'rgba(255,255,255,0.6)',
-                              padding: 2,
-                            }}
-                          >
-                            <Settings size={13} />
-                          </button>
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setActiveManageChannel(group)
+                                setShowManageModal(true)
+                              }}
+                              title="Manage Group Members"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'rgba(255,255,255,0.6)',
+                                padding: 2,
+                              }}
+                            >
+                              <Settings size={13} />
+                            </button>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setChannelToDelete(group)
+                              }}
+                              title="Delete group"
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'rgba(255,255,255,0.6)',
+                                padding: 2,
+                              }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -1135,7 +1229,7 @@ export default function ChatSidebar({
         </div>
       )}
 
-      {/* MANAGE GROUP MEMBERS MODAL (ADMIN ONLY) */}
+      {/* MANAGE GROUP MEMBERS MODAL */}
       {showManageModal && activeManageChannel && (
         <div
           style={{
@@ -1280,6 +1374,97 @@ export default function ChatSidebar({
                   )
                 })}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CHANNEL CONFIRMATION MODAL */}
+      {channelToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 14,
+              width: '100%',
+              maxWidth: 400,
+              padding: 22,
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.25)',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: '50%',
+                background: '#fef2f2',
+                color: '#dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px',
+              }}
+            >
+              <AlertTriangle size={22} />
+            </div>
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', margin: '0 0 6px 0' }}>
+              Delete #{channelToDelete.name}?
+            </h3>
+            <p style={{ fontSize: 12, color: '#64748b', margin: '0 0 16px 0', lineHeight: 1.5 }}>
+              Are you sure you want to permanently delete this {channelToDelete.type} channel? All messages and history in this group will be deleted for all members.
+            </p>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setChannelToDelete(null)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: '1px solid #cbd5e1',
+                  background: '#fff',
+                  color: '#475569',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deletingChannel}
+                onClick={handleConfirmDeleteChannel}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: '#dc2626',
+                  color: '#fff',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: deletingChannel ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                {deletingChannel && <Loader2 size={13} className="animate-spin" />}
+                <span>Delete Channel</span>
+              </button>
             </div>
           </div>
         </div>

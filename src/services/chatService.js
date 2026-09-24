@@ -24,6 +24,12 @@ export const removeChannelMember = async (channelId, memberId) => {
   return response.data
 }
 
+// 4b. Delete Channel / Group (Admin only)
+export const deleteChannel = async (channelId) => {
+  const response = await apiClient.delete(`/chat/channels/${channelId}`)
+  return response.data
+}
+
 // 5. Get chat users for direct messaging
 export const getChatUsers = async () => {
   const response = await apiClient.get('/chat/users')
