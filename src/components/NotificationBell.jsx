@@ -8,11 +8,11 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from '../services/notificationService'
-import { initSocket, subscribeToSocket } from '../services/socketService'
 import {
   requestNotificationPermission,
   sendBrowserNotification,
 } from '../services/browserNotificationService'
+import { getCurrentUser } from '../services/authService'
 
 export default function NotificationBell({ fullPagePath = '/employee/notifications' }) {
   const [unreadCount, setUnreadCount] = useState(0)
@@ -86,8 +86,49 @@ export default function NotificationBell({ fullPagePath = '/employee/notificatio
       )
     })
 
-    return () => unsubNotif()
-  }, [fullPagePath])
+    // Listen for incoming chat message alerts across the application
+    const unsubMsgAlert = subscribeToSocket('new_message_alert', (alert) => {
+      if (!alert) return
+      const current = getCurrentUser()
+      const currentUserId = (current?.id || current?._id || current?.userId)?.toString()
+
+      // Ignore outgoing messages from current user
+      if (alert.senderId && alert.senderId.toString() === currentUserId) return
+
+      const notifTitle =
+        alert.type === 'direct'
+          ? `Message from ${alert.senderName || 'Staff'}`
+          : `#${alert.channel} • ${alert.senderName || 'Staff'}`
+
+      const chatUrl = current?.role === 'admin' ? '/admin/chat' : '/employee/chat'
+
+      // Native browser desktop notification with sound chime
+      sendBrowserNotification(notifTitle, {
+        body: alert.message || 'New message in chat',
+        url: chatUrl,
+      })
+
+      // Toast alert if not already actively looking at that chat
+      toast.info(
+        <div style={{ cursor: 'pointer' }} onClick={() => navigate(chatUrl)}>
+          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{notifTitle}</div>
+          <div style={{ fontSize: 12, opacity: 0.95 }}>{alert.message || 'New message in chat'}</div>
+        </div>,
+        {
+          position: 'top-right',
+          autoClose: 4500,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+        }
+      )
+    })
+
+    return () => {
+      unsubNotif()
+      unsubMsgAlert()
+    }
+  }, [fullPagePath, navigate])
 
   useEffect(() => {
     if (isOpen) {

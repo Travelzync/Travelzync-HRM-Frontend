@@ -175,7 +175,9 @@ export default function ChatSidebar({
           ? selectedChat?.type === 'direct' && selectedChat?.recipientId === alert.senderId?.toString()
           : selectedChat?.type !== 'direct' && selectedChat?.id === alert.channel
 
-      if (!isCurrentChat) {
+      const isHidden = typeof document !== 'undefined' && document.hidden
+
+      if (!isCurrentChat || isHidden) {
         // Desktop Browser Notification
         const notifTitle =
           alert.type === 'direct'
@@ -299,12 +301,13 @@ export default function ChatSidebar({
     if (!channelToDelete || deletingChannel) return
     try {
       setDeletingChannel(true)
-      const res = await deleteChannel(channelToDelete.id)
+      const targetId = channelToDelete.id || channelToDelete.slug || channelToDelete._id
+      const res = await deleteChannel(targetId)
       if (res?.success) {
         toast.success(res.message || 'Channel deleted successfully')
         setChannelToDelete(null)
         await loadSidebarData()
-        if (selectedChat?.id === channelToDelete.id) {
+        if (selectedChat?.id === targetId || selectedChat?.id === channelToDelete.slug || selectedChat?.id === channelToDelete._id) {
           setSelectedChat({
             type: 'public',
             id: 'general',

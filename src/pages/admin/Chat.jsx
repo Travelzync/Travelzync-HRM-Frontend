@@ -190,7 +190,9 @@ export default function AdminChat() {
           ? selectedChat?.type === 'direct' && selectedChat?.recipientId === alert.senderId?.toString()
           : selectedChat?.type !== 'direct' && selectedChat?.id === alert.channel
 
-      if (!isCurrentChat) {
+      const isHidden = typeof document !== 'undefined' && document.hidden
+
+      if (!isCurrentChat || isHidden) {
         const notifTitle =
           alert.type === 'direct'
             ? `Message from ${alert.senderName || 'Staff'}`
@@ -555,12 +557,13 @@ export default function AdminChat() {
     if (!channelToDelete || deletingChannel) return
     try {
       setDeletingChannel(true)
-      const res = await deleteChannel(channelToDelete.id)
+      const targetId = channelToDelete.id || channelToDelete.slug || channelToDelete._id
+      const res = await deleteChannel(targetId)
       if (res?.success) {
         toast.success(res.message || 'Channel deleted successfully')
         setChannelToDelete(null)
         await loadSidebar()
-        if (selectedChat?.id === channelToDelete.id) {
+        if (selectedChat?.id === targetId || selectedChat?.id === channelToDelete.slug || selectedChat?.id === channelToDelete._id) {
           setSelectedChat({
             type: 'public',
             id: 'general',

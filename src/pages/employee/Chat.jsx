@@ -143,6 +143,9 @@ export default function Chat() {
         isRelevant = msg.channel === selectedChat.id
       }
 
+      const msgSenderId = (msg.sender?._id || msg.sender?.id || msg.sender)?.toString()
+      const isFromOther = msgSenderId && msgSenderId !== currentUserId
+
       if (isRelevant) {
         setMessages((prev) => {
           if (prev.some((m) => m._id === msg._id)) return prev
@@ -150,9 +153,8 @@ export default function Chat() {
         })
         scrollToBottom(true)
 
-        // Browser desktop notification if incoming and window is not active
-        const msgSenderId = (msg.sender?._id || msg.sender?.id || msg.sender)?.toString()
-        if (msgSenderId !== currentUserId) {
+        // Browser desktop notification if tab is hidden or minimized
+        if (isFromOther && typeof document !== 'undefined' && document.hidden) {
           const title =
             msg.type === 'direct'
               ? `Message from ${msg.sender?.name || 'Colleague'}`
@@ -162,6 +164,23 @@ export default function Chat() {
             url: '/employee/chat',
           })
         }
+      } else if (isFromOther) {
+        // Incoming message for another channel or conversation
+        const title =
+          msg.type === 'direct'
+            ? `Message from ${msg.sender?.name || 'Colleague'}`
+            : `#${msg.channel} • ${msg.sender?.name || 'Staff'}`
+        sendBrowserNotification(title, {
+          body: msg.text,
+          url: '/employee/chat',
+        })
+        toast.info(
+          <div style={{ cursor: 'pointer' }}>
+            <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{title}</div>
+            <div style={{ fontSize: 12, opacity: 0.9 }}>{msg.text}</div>
+          </div>,
+          { position: 'top-right', autoClose: 4000 }
+        )
       }
     })
 
