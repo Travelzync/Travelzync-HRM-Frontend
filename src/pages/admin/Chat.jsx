@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronUp,
   AlertTriangle,
+  Bell,
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import {
@@ -47,6 +48,8 @@ import {
 import {
   requestNotificationPermission,
   sendBrowserNotification,
+  getNotificationPermissionStatus,
+  triggerTestNotification,
 } from '../../services/browserNotificationService'
 
 const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '🎉']
@@ -54,6 +57,8 @@ const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '🎉']
 export default function AdminChat() {
   const currentUser = getCurrentUser()
   const currentUserId = (currentUser?.id || currentUser?._id || currentUser?.userId)?.toString()
+
+  const [permStatus, setPermStatus] = useState(() => getNotificationPermissionStatus())
 
   const [publicChannels, setPublicChannels] = useState([])
   const [privateChannels, setPrivateChannels] = useState([])
@@ -1105,6 +1110,42 @@ export default function AdminChat() {
                 {showPinnedBanner ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               </button>
             )}
+
+            <button
+              onClick={async () => {
+                if (permStatus !== 'granted') {
+                  const res = await requestNotificationPermission()
+                  setPermStatus(res)
+                  if (res === 'granted') {
+                    sendBrowserNotification('TravelZync Admin Chat', { body: 'Desktop chat alerts active! 🎉' })
+                    toast.success('Desktop chat alerts enabled!')
+                  } else if (res === 'denied') {
+                    toast.warning('Notifications blocked in browser. Click lock 🔒 in address bar.')
+                  }
+                } else {
+                  const res = triggerTestNotification()
+                  if (res.success) toast.success('Test desktop alert sent!')
+                  else toast.info('Alert triggered. If no popup appeared, check Windows Focus Assist / Do Not Disturb.')
+                }
+              }}
+              title={permStatus === 'granted' ? 'Desktop alerts active (Click to test)' : 'Click to enable desktop alerts'}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                background: permStatus === 'granted' ? '#f0fdf4' : '#eff6ff',
+                color: permStatus === 'granted' ? '#16a34a' : '#2563eb',
+                borderRadius: 12,
+                padding: '3px 8px',
+                border: `1px solid ${permStatus === 'granted' ? '#dcfce7' : '#bfdbfe'}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                cursor: 'pointer',
+              }}
+            >
+              <Bell size={12} />
+              <span>{permStatus === 'granted' ? 'Alerts ON' : 'Enable Alerts'}</span>
+            </button>
 
             <span
               style={{

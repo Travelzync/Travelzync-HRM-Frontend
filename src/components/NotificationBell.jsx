@@ -8,9 +8,12 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from '../services/notificationService'
+import { initSocket, subscribeToSocket } from '../services/socketService'
 import {
   requestNotificationPermission,
   sendBrowserNotification,
+  getNotificationPermissionStatus,
+  triggerTestNotification,
 } from '../services/browserNotificationService'
 import { getCurrentUser } from '../services/authService'
 
@@ -19,8 +22,41 @@ export default function NotificationBell({ fullPagePath = '/employee/notificatio
   const [isOpen, setIsOpen] = useState(false)
   const [recentNotifications, setRecentNotifications] = useState([])
   const [loading, setLoading] = useState(false)
+  const [permStatus, setPermStatus] = useState(() => getNotificationPermissionStatus())
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
+
+  const handleEnableDesktopAlerts = async () => {
+    try {
+      const res = await requestNotificationPermission()
+      setPermStatus(res)
+      if (res === 'granted') {
+        sendBrowserNotification('TravelZync HRM', {
+          body: 'Desktop notifications are successfully enabled! 🎉',
+        })
+        toast.success('Desktop notifications enabled!')
+      } else if (res === 'denied') {
+        toast.warning(
+          'Browser notifications are blocked. Please click the lock 🔒 icon next to localhost in the address bar and select "Allow".',
+          { autoClose: 7000 }
+        )
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleTestDesktopNotification = (e) => {
+    e?.stopPropagation()
+    const res = triggerTestNotification()
+    if (res.success) {
+      toast.success('Test desktop notification sent!')
+    } else if (res.reason === 'denied') {
+      toast.warning('Notifications blocked in browser. Allow in site settings.')
+    } else {
+      toast.info('Test triggered! If no popup appears, please check Windows Focus Assist / Do Not Disturb.')
+    }
+  }
 
   // Fetch unread count
   const loadCount = async () => {
@@ -133,6 +169,7 @@ export default function NotificationBell({ fullPagePath = '/employee/notificatio
   useEffect(() => {
     if (isOpen) {
       loadRecent()
+      setPermStatus(getNotificationPermissionStatus())
     }
   }, [isOpen])
 
@@ -302,6 +339,85 @@ export default function NotificationBell({ fullPagePath = '/employee/notificatio
               </button>
             )}
           </div>
+
+          {/* Desktop Notification Permission Banner */}
+          {permStatus !== 'granted' ? (
+            <div
+              style={{
+                padding: '9px 14px',
+                background: permStatus === 'denied' ? '#fff1f2' : '#f0f9ff',
+                borderBottom: '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8,
+              }}
+            >
+              <Bell size={15} style={{ color: permStatus === 'denied' ? '#e11d48' : '#0284c7', marginTop: 2, flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: permStatus === 'denied' ? '#9f1239' : '#0369a1' }}>
+                  {permStatus === 'denied' ? 'Desktop Alerts Blocked' : 'Enable Desktop Alerts'}
+                </div>
+                <div style={{ fontSize: 10.5, color: permStatus === 'denied' ? '#be123c' : '#0369a1', marginTop: 1, lineHeight: 1.3 }}>
+                  {permStatus === 'denied'
+                    ? 'Click the 🔒 icon in the URL bar & set Notifications to "Allow".'
+                    : 'Get real-time browser popups for incoming chat & updates.'}
+                </div>
+                {permStatus !== 'denied' && (
+                  <button
+                    onClick={handleEnableDesktopAlerts}
+                    style={{
+                      marginTop: 5,
+                      background: '#0284c7',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '3px 8px',
+                      borderRadius: 4,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Enable Now
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div
+              style={{
+                padding: '6px 14px',
+                background: '#f0fdf4',
+                borderBottom: '1px solid #dcfce7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: 11,
+                color: '#15803d',
+                fontWeight: 600,
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
+                Desktop Alerts Active
+              </span>
+              <button
+                onClick={handleTestDesktopNotification}
+                title="Send a sample browser desktop notification"
+                style={{
+                  background: '#dcfce7',
+                  border: '1px solid #bbf7d0',
+                  color: '#15803d',
+                  padding: '2px 7px',
+                  borderRadius: 4,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Test Alert
+              </button>
+            </div>
+          )}
 
           {/* List */}
           <div style={{ maxHeight: 280, overflowY: 'auto' }} className="hide-scroll">

@@ -3,6 +3,9 @@
  * Dispatches operating system desktop / browser notifications for real-time chat & HRM alerts.
  */
 
+const DEFAULT_NOTIFICATION_ICON =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23c0392b"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>'
+
 // Soft audio chime using Web Audio API (crisp, pleasant dual-tone chime)
 export const playNotificationChime = () => {
   if (typeof window === 'undefined') return
@@ -48,7 +51,15 @@ export const isNotificationSupported = () => {
   return typeof window !== 'undefined' && 'Notification' in window
 }
 
-// Request permission with promise
+// Get current permission status ('granted', 'denied', 'default', or 'unsupported')
+export const getNotificationPermissionStatus = () => {
+  if (!isNotificationSupported()) {
+    return 'unsupported'
+  }
+  return Notification.permission
+}
+
+// Request permission with promise (must be triggered from user gesture like a button click)
 export const requestNotificationPermission = async () => {
   if (!isNotificationSupported()) {
     return 'unsupported'
@@ -77,22 +88,26 @@ export const sendBrowserNotification = (title, options = {}) => {
     playNotificationChime()
   }
 
+  // Can only trigger if permission is explicitly granted
   if (Notification.permission !== 'granted') {
-    requestNotificationPermission().catch(() => {})
     return null
   }
 
   try {
-    const defaultIcon = '/favicon.ico'
-    const notif = new Notification(title, {
-      icon: options.icon || defaultIcon,
-      badge: options.badge || defaultIcon,
+    const notifOptions = {
       body: options.body || '',
-      tag: options.tag || undefined,
-      renotify: options.renotify ?? true,
+      icon: options.icon || DEFAULT_NOTIFICATION_ICON,
       silent: options.silent ?? false,
-      ...options,
-    })
+    }
+
+    if (options.tag) {
+      notifOptions.tag = options.tag
+      if (typeof options.renotify === 'boolean') {
+        notifOptions.renotify = options.renotify
+      }
+    }
+
+    const notif = new Notification(title, notifOptions)
 
     notif.onclick = (event) => {
       event.preventDefault()
@@ -114,15 +129,16 @@ export const sendBrowserNotification = (title, options = {}) => {
   }
 }
 
-// Auto-request notification permission on first user click if state is default
-if (typeof window !== 'undefined' && 'Notification' in window) {
-  const triggerOnInteraction = () => {
-    if (Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {})
-    }
-    window.removeEventListener('click', triggerOnInteraction)
-    window.removeEventListener('keydown', triggerOnInteraction)
+// Helper to trigger a test desktop notification immediately
+export const triggerTestNotification = () => {
+  if (!isNotificationSupported()) {
+    return { success: false, reason: 'unsupported' }
   }
-  window.addEventListener('click', triggerOnInteraction, { once: true })
-  window.addEventListener('keydown', triggerOnInteraction, { once: true })
+  if (Notification.permission !== 'granted') {
+    return { success: false, reason: Notification.permission }
+  }
+  const notif = sendBrowserNotification('TravelZync HRM • Test Alert', {
+    body: 'Browser desktop notifications are working seamlessly! 🎉',
+  })
+  return { success: !!notif, reason: notif ? 'ok' : 'blocked' }
 }
